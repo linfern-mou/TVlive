@@ -10,24 +10,21 @@
  * - 非流媒体响应超过2000字符提供下载
  * - 修复JSON响应中断问题
  * - 增强错误处理
+ * - 【新增】详细区分SOCKS5代理超时和URL访问超时
  */
 
-// 设置严格的错误报告和输出缓冲
-ob_start(); // 开启输出缓冲，防止意外的输出污染JSON
-
+ob_start();
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS, HEAD');
 header('Access-Control-Allow-Headers: Content-Type');
 header('Content-Type: application/json; charset=utf-8');
 
-// 增加限制，避免超时和内存问题
-set_time_limit(120); // 增加到120秒
+set_time_limit(120);
 ini_set('max_execution_time', 120);
-ini_set('memory_limit', '256M'); // 增加内存限制
+ini_set('memory_limit', '256M');
 error_reporting(0);
 ini_set('display_errors', 0);
 
-// 简单的请求日志（用于调试）
 function logRequest($message, $data = null) {
     $logDir = __DIR__ . '/logs';
     if (!is_dir($logDir)) {
@@ -43,12 +40,10 @@ function logRequest($message, $data = null) {
     }
     
     $logMessage .= "\n";
-    
     @file_put_contents($logFile, $logMessage, FILE_APPEND);
 }
 
-// 清理输出并返回错误
-function returnError($message, $code = 500) {
+function returnError($message, $code = 500, $isProxyTimeout = false) {
     ob_end_clean();
     http_response_code($code);
     
@@ -62,70 +57,53 @@ function returnError($message, $code = 500) {
         'size' => 0,
         'time' => 0,
         'redirect_count' => 0,
-        'redirects' => []
+        'redirects' => [],
+        'error_type' => $isProxyTimeout ? 'proxy_timeout' : ($code == 504 ? 'url_timeout' : 'general_error'),
+        'proxy_error' => $isProxyTimeout,
+        'error_details' => $message,
+        'proxy_used' => false
     ];
     
-    logRequest("ERROR: $message", ['code' => $code]);
+    logRequest("ERROR: $message", [
+        'code' => $code, 
+        'proxy_error' => $isProxyTimeout,
+        'error_type' => $errorResponse['error_type']
+    ]);
     
     echo json_encode($errorResponse, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
-// 处理下载请求
 if (isset($_GET['download'])) {
     try {
-        ob_end_clean(); // 清理输出缓冲
-        
-        // 从缓存文件读取响应数据
-        $cacheFile = preg_replace('/[^a-f0-9]/', '', $_GET['download']); // 安全过滤
+        ob_end_clean();
+        $cacheFile = preg_replace('/[^a-f0-9]/', '', $_GET['download']);
         $cachePath = sys_get_temp_dir() . '/proxy_cache_' . $cacheFile . '.json';
         
         if (file_exists($cachePath) && filesize($cachePath) > 0) {
             $cacheData = json_decode(file_get_contents($cachePath), true);
             
             if ($cacheData && isset($cacheData['body'])) {
-                // 设置下载头
-                $filename = 'downloaded_file';
+                // 从缓存数据中获取文件名
+                $filename = isset($cacheData['suggested_filename']) ? $cacheData['suggested_filename'] : 'downloaded_file';
                 
-                // 根据内容类型设置文件名和Content-Type
-                if (isset($cacheData['headers']['content-type'])) {
-                    $contentType = $cacheData['headers']['content-type'];
-                    header('Content-Type: ' . $contentType);
-                    
-                    // 提取可能的文件扩展名
-                    if (strpos($contentType, 'video/') !== false) {
-                        $ext = explode('/', $contentType)[1];
-                        $filename = 'video.' . ($ext === 'x-mpegurl' ? 'm3u8' : $ext);
-                    } elseif (strpos($contentType, 'audio/') !== false) {
-                        $ext = explode('/', $contentType)[1];
-                        $filename = 'audio.' . $ext;
-                    } elseif (strpos($contentType, 'application/x-mpegurl') !== false ||
-                              strpos($contentType, 'application/vnd.apple.mpegurl') !== false) {
-                        $filename = 'playlist.m3u8';
-                        header('Content-Type: application/vnd.apple.mpegurl');
-                    } elseif (strpos($contentType, 'application/json') !== false) {
-                        $filename = 'response.json';
-                    } elseif (strpos($contentType, 'text/html') !== false) {
-                        $filename = 'response.html';
-                    } elseif (strpos($contentType, 'text/plain') !== false) {
-                        $filename = 'response.txt';
-                    }
-                }
+                // 获取内容类型
+                $contentType = isset($cacheData['headers']['content-type']) ? $cacheData['headers']['content-type'] : 'application/octet-stream';
                 
-                // 设置下载头
-                header('Content-Disposition: attachment; filename="' . $filename . '"');
+                // 设置响应头
+                header('Content-Type: ' . $contentType);
+                header('Content-Disposition: attachment; filename="' . basename($filename) . '"');
                 header('Content-Length: ' . strlen($cacheData['body']));
+                header('Cache-Control: no-cache, no-store, must-revalidate');
+                header('Pragma: no-cache');
+                header('Expires: 0');
                 
-                // 输出完整响应体
                 echo $cacheData['body'];
-                
-                // 删除缓存文件
                 @unlink($cachePath);
                 exit;
             }
         }
         
-        // 如果缓存文件不存在或无效
         returnError('下载链接已过期或无效', 404);
         
     } catch (Exception $e) {
@@ -133,19 +111,16 @@ if (isset($_GET['download'])) {
     }
 }
 
-// 处理预检请求
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS' || $_SERVER['REQUEST_METHOD'] === 'HEAD') {
     ob_end_clean();
     http_response_code(200);
     exit;
 }
 
-// 只允许POST请求
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     returnError('只允许POST请求', 405);
 }
 
-// 读取并解析请求数据
 try {
     $input = file_get_contents('php://input');
     
@@ -167,7 +142,6 @@ try {
     returnError('请求数据读取失败: ' . $e->getMessage(), 400);
 }
 
-/* ========= hosts 解析（新增） ========= */
 function parseHostsMap($text) {
     $map = [];
     foreach (preg_split('/\r?\n/', $text) as $line) {
@@ -187,27 +161,26 @@ function parseHostsMap($text) {
 }
 
 $hostsMap = parseHostsMap($data['host'] ?? '');
-
-/* ========= 参数 ========= */
-$url              = $data['url'];
-$method           = strtoupper($data['method'] ?? 'GET');
-$timeout          = max(1, min(120, (int)($data['timeout'] ?? 30)));
-$proxy_address    = trim($data['proxy'] ?? '');
-$proxy_username   = trim($data['proxy_username'] ?? '');
-$proxy_password   = trim($data['proxy_password'] ?? '');
+$url = $data['url'];
+$method = strtoupper($data['method'] ?? 'GET');
+$timeout = max(1, min(120, (int)($data['timeout'] ?? 30)));
+$proxy_address = trim($data['proxy'] ?? '');
+$proxy_username = trim($data['proxy_username'] ?? '');
+$proxy_password = trim($data['proxy_password'] ?? '');
 $follow_redirects = (bool)($data['follow_redirects'] ?? true);
-$max_redirects    = max(0, min(50, (int)($data['max_redirects'] ?? 10)));
-$request_headers  = (array)($data['headers'] ?? []);
+$max_redirects = max(0, min(50, (int)($data['max_redirects'] ?? 10)));
+$request_headers = (array)($data['headers'] ?? []);
 
-// 记录请求信息
 logRequest("收到请求", [
     'url' => $url,
     'method' => $method,
     'timeout' => $timeout,
-    'has_proxy' => !empty($proxy_address)
+    'has_proxy' => !empty($proxy_address),
+    'proxy' => $proxy_address ?: '无',
+    'follow_redirects' => $follow_redirects,
+    'max_redirects' => $max_redirects
 ]);
 
-// 执行请求并捕获可能的中断
 try {
     $result = executeRequest(
         $url,
@@ -222,7 +195,6 @@ try {
         $max_redirects
     );
     
-    // 确保结果是数组
     if (!is_array($result)) {
         $result = [
             'url' => $url,
@@ -233,29 +205,25 @@ try {
             'size' => 0,
             'time' => 0,
             'redirect_count' => 0,
-            'redirects' => []
+            'redirects' => [],
+            'error_type' => 'server_error',
+            'proxy_error' => false,
+            'error_details' => '服务器内部处理错误',
+            'proxy_used' => !empty($proxy_address)
         ];
     }
     
-    // 检查是否为媒体文件或大文件
     $isMediaFile = false;
     $isLargeFile = false;
     $contentType = isset($result['headers']['content-type']) ? strtolower($result['headers']['content-type']) : '';
-    $urlPath = parse_url($url, PHP_URL_PATH);
-    $finalUrlPath = parse_url($result['final_url'] ?? $url, PHP_URL_PATH);
     
-    // 媒体文件扩展名列表（移除了M3U8/M3U）
     $mediaExtensions = [
-        // 视频格式
         '.flv', '.mp4', '.m4v', '.mov', '.avi', '.wmv', '.mkv', '.webm', '.ts', '.mts', '.m2ts',
         '.3gp', '.3g2', '.f4v', '.vob', '.ogv', '.divx',
-        // 音频格式
         '.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a', '.wma',
-        // 流媒体格式（移除了.m3u8, .m3u）
         '.mpd'
     ];
     
-    // 通过URL后缀检测媒体文件
     function isMediaUrl($url) {
         global $mediaExtensions;
         $urlPath = parse_url($url, PHP_URL_PATH);
@@ -270,9 +238,7 @@ try {
         return false;
     }
     
-    // 通过Content-Type检测媒体文件（排除M3U8）
     function isMediaContentType($contentType) {
-        // 排除M3U8相关的Content-Type
         $m3u8Types = [
             'application/x-mpegurl',
             'application/vnd.apple.mpegurl',
@@ -281,7 +247,7 @@ try {
         
         foreach ($m3u8Types as $m3u8Type) {
             if (strpos($contentType, $m3u8Type) !== false) {
-                return false; // M3U8文件不视为媒体文件
+                return false;
             }
         }
         
@@ -289,9 +255,7 @@ try {
                strpos($contentType, 'audio/') === 0;
     }
     
-    // 检测是否为M3U8文件
     function isM3U8File($url, $contentType) {
-        // 检查URL后缀
         $urlPath = parse_url($url, PHP_URL_PATH);
         if ($urlPath) {
             $lowerPath = strtolower($urlPath);
@@ -300,7 +264,6 @@ try {
             }
         }
         
-        // 检查Content-Type
         $m3u8Types = [
             'application/x-mpegurl',
             'application/vnd.apple.mpegurl',
@@ -313,7 +276,6 @@ try {
             }
         }
         
-        // 检查响应体是否以#EXTM3U开头
         global $result;
         if (isset($result['body']) && strpos(trim($result['body']), '#EXTM3U') === 0) {
             return true;
@@ -322,27 +284,123 @@ try {
         return false;
     }
     
-    // 检测是否为M3U8文件
-    $isM3U8 = isM3U8File($result['final_url'] ?? $url, $contentType);
+function generateSuggestedFilename($url, $contentType, $headers) {
+    // 清理content-type，移除字符集部分
+    $cleanContentType = explode(';', $contentType)[0];
+    $cleanContentType = trim($cleanContentType);
     
-    // 检测是否为媒体文件（排除M3U8）
+    // 1. 尝试从 Content-Disposition 获取
+    if (isset($headers['content-disposition'])) {
+        $disposition = $headers['content-disposition'];
+        if (preg_match('/filename\*?=["\']?(?:UTF-8\'\')?([^"\'\s;]+)/i', $disposition, $matches) ||
+            preg_match('/filename=["\']?([^"\'\s;]+)/i', $disposition, $matches)) {
+            $filename = urldecode($matches[1]);
+            if ($filename && $filename !== '') {
+                return ensureFileExtension($filename, $cleanContentType);
+            }
+        }
+    }
+    
+    // 2. 尝试从 URL 路径获取最后一个非空段
+    $parsed = parse_url($url);
+    if ($parsed && isset($parsed['path'])) {
+        $path = $parsed['path'];
+        if ($path && $path !== '/') {
+            $parts = explode('/', $path);
+            $filteredParts = array_filter($parts, function($part) {
+                return $part !== '' && $part !== '/' && !preg_match('/^\d+$/', $part);
+            });
+            
+            if (!empty($filteredParts)) {
+                $lastPart = end($filteredParts);
+                
+                // 检查是否是常见API端点名称
+                $apiEndpoints = [
+                    'GetChannelsList', 'GetChannelList', 'GetPrograms', 'GetEPG',
+                    'getLiveSource', 'getConfig', 'getToken', 'getPlaylist'
+                ];
+                
+                // 如果最后一个部分是API端点名称
+                if (in_array($lastPart, $apiEndpoints) || preg_match('/^[A-Z][a-zA-Z]+$/', $lastPart)) {
+                    $filename = $lastPart . getExtensionFromContentType($cleanContentType);
+                    return $filename;
+                }
+                
+                // 如果已经有扩展名
+                if (strpos($lastPart, '.') !== false) {
+                    return $lastPart;
+                }
+                
+                // 没有扩展名，添加扩展名
+                $filename = $lastPart . getExtensionFromContentType($cleanContentType);
+                return $filename;
+            }
+        }
+    }
+    
+    // 3. 尝试从查询参数获取有用信息
+    if ($parsed && isset($parsed['query'])) {
+        parse_str($parsed['query'], $queryParams);
+        
+        // 检查是否有表示操作或资源的参数
+        $resourceParams = ['action', 'method', 'type', 'resource', 'endpoint', 'api'];
+        foreach ($resourceParams as $param) {
+            if (isset($queryParams[$param]) && !empty($queryParams[$param])) {
+                $value = $queryParams[$param];
+                if (is_string($value) && strlen($value) < 50 && !strpos($value, '=')) {
+                    $filename = $value . getExtensionFromContentType($cleanContentType);
+                    return $filename;
+                }
+            }
+        }
+        
+        // 检查是否有包含"list"、"data"、"info"等关键词的参数值
+        foreach ($queryParams as $key => $value) {
+            if (is_string($value) && 
+                (preg_match('/(list|data|info|config|source|token|auth|channel|program|epg)$/i', $key) ||
+                 preg_match('/(list|data|info|config|source|token|auth|channel|program|epg)$/i', $value)) &&
+                strlen($value) < 30) {
+                $filename = $value . getExtensionFromContentType($cleanContentType);
+                return $filename;
+            }
+        }
+    }
+    
+    // 4. 从主机名生成文件名
+    if ($parsed && isset($parsed['host'])) {
+        $host = $parsed['host'];
+        $hostParts = explode('.', $host);
+        $domain = $hostParts[0] ?? 'response';
+        
+        // 生成有意义的文件名
+        $timestamp = date('Ymd_His');
+        $filename = $domain . '_' . $timestamp . getExtensionFromContentType($cleanContentType);
+        return $filename;
+    }
+    
+    // 5. 最后回退方案
+    $timestamp = date('Ymd_His');
+    return 'response_' . $timestamp . getExtensionFromContentType($cleanContentType);
+}
+    
+    $isM3U8 = isM3U8File($result['final_url'] ?? $url, $contentType);
     $isMediaByUrl = isMediaUrl($url) || isMediaUrl($result['final_url'] ?? $url);
     $isMediaByContent = isMediaContentType($contentType);
     $isMediaFile = ($isMediaByUrl || $isMediaByContent) && !$isM3U8;
     
-    // 检测是否为大文件（>2MB）
     $contentLength = isset($result['headers']['content-length']) ? intval($result['headers']['content-length']) : 0;
     $bodySize = isset($result['body']) ? strlen($result['body']) : 0;
     
-    if ($contentLength > 2 * 1024 * 1024) { // 2MB
+    if ($contentLength > 2 * 1024 * 1024) {
         $isLargeFile = true;
     } elseif ($bodySize > 2 * 1024 * 1024) {
         $isLargeFile = true;
     }
     
-    // 处理大文件或媒体文件：不获取响应体
+    // 生成建议的文件名
+    $suggestedFilename = generateSuggestedFilename($result['final_url'] ?? $url, $contentType, $result['headers'] ?? []);
+    
     if (($isLargeFile || $isMediaFile) && !$isM3U8) {
-        // 只显示基本信息，不显示内容体
         $result['body'] = '[文件信息]' . "\n\n";
         $result['body'] .= '文件类型: ' . ($isMediaFile ? '媒体文件' : '大文件') . "\n";
         $result['body'] .= '内容类型: ' . ($contentType ?: '未指定') . "\n";
@@ -363,44 +421,43 @@ try {
         $result['file_type'] = $isMediaFile ? 'media' : 'large_file';
         $result['download_available'] = false;
     } else {
-        // 对于M3U8文件，总是显示完整内容，不截断
         if ($isM3U8) {
             $result['download_url'] = null;
             $result['truncated'] = false;
             $result['download_available'] = false;
             
-            // 如果M3U8文件很大，提供下载选项
             if ($bodySize > 2000) {
                 $cacheId = md5(uniqid() . $url . microtime(true));
                 $cachePath = sys_get_temp_dir() . '/proxy_cache_' . $cacheId . '.json';
                 
                 if (file_put_contents($cachePath, json_encode([
                     'body' => $result['body'],
-                    'headers' => $result['headers']
-                ]))) {
+                    'headers' => $result['headers'],
+                    'suggested_filename' => $suggestedFilename,  // 添加建议的文件名
+                    'original_url' => $result['final_url'] ?? $url
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))) {
                     $result['download_url'] = 'proxy.php?download=' . $cacheId;
                     $result['download_available'] = true;
+                    $result['suggested_filename'] = $suggestedFilename;  // 添加到结果中
                     cleanupOldCacheFiles(300);
                 }
             }
         } else {
-            // 对于普通文本响应，超过2000字符提供下载
             if ($bodySize > 2000) {
-                // 生成唯一缓存文件 ID
                 $cacheId = md5(uniqid() . $url . microtime(true));
                 $cachePath = sys_get_temp_dir() . '/proxy_cache_' . $cacheId . '.json';
                 
-                // 保存完整响应到缓存文件
                 if (file_put_contents($cachePath, json_encode([
                     'body' => $result['body'],
-                    'headers' => $result['headers']
-                ]))) {
+                    'headers' => $result['headers'],
+                    'suggested_filename' => $suggestedFilename,  // 添加建议的文件名
+                    'original_url' => $result['final_url'] ?? $url
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))) {
                     $result['download_url'] = 'proxy.php?download=' . $cacheId;
                     $result['body'] = substr($result['body'], 0, 2000) . "\n\n... (响应体超过2000字符，已截断前2000字符，请下载完整文件查看) ...";
                     $result['truncated'] = true;
                     $result['download_available'] = true;
-                    
-                    // 清理旧缓存文件（超过5分钟）
+                    $result['suggested_filename'] = $suggestedFilename;  // 添加到结果中
                     cleanupOldCacheFiles(300);
                 } else {
                     $result['body'] = substr($result['body'], 0, 2000) . "\n\n... (响应体超过2000字符，已截断前2000字符，但无法生成下载链接) ...";
@@ -415,10 +472,9 @@ try {
         }
     }
     
-    // 标记是否为M3U8文件
     $result['is_m3u8'] = $isM3U8;
+    $result['proxy_used'] = !empty($proxy_address);
     
-    // 确保所有必要的字段都存在
     $result = array_merge([
         'url' => $url,
         'final_url' => $url,
@@ -434,29 +490,31 @@ try {
         'download_available' => false,
         'skip_body' => false,
         'file_type' => '',
-        'is_m3u8' => false
+        'is_m3u8' => false,
+        'error_type' => null,
+        'proxy_error' => false,
+        'error_details' => null,
+        'curl_error_code' => null,
+        'curl_error_message' => null,
+        'proxy_used' => false,
+        'suggested_filename' => $suggestedFilename  // 确保有这个字段
     ], $result);
     
-    // 记录成功响应
-    logRequest("请求成功", [
+    logRequest("请求完成", [
         'url' => $url,
         'status' => $result['status_code'],
-        'size' => $result['size'],
-        'time' => $result['time'],
-        'is_m3u8' => $result['is_m3u8'],
-        'body_size' => strlen($result['body'])
+        'proxy_used' => $result['proxy_used'],
+        'error_type' => $result['error_type'] ?: '无',
+        'filename' => $suggestedFilename
     ]);
     
-    // 清除输出缓冲并发送JSON响应
     ob_end_clean();
     echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     
 } catch (Exception $e) {
-    // 捕获异常，返回错误信息
     returnError('服务器处理错误: ' . $e->getMessage(), 500);
 }
 
-// 清理旧缓存文件
 function cleanupOldCacheFiles($maxAge = 300) {
     try {
         $tempDir = sys_get_temp_dir();
@@ -469,11 +527,9 @@ function cleanupOldCacheFiles($maxAge = 300) {
             }
         }
     } catch (Exception $e) {
-        // 忽略清理错误
     }
 }
 
-// 格式化字节数
 function formatBytes($bytes) {
     $units = ['B', 'KB', 'MB', 'GB', 'TB'];
     $bytes = max($bytes, 0);
@@ -484,7 +540,7 @@ function formatBytes($bytes) {
     return round($bytes, 2) . ' ' . $units[$pow];
 }
 
-/* ======================================================= */
+// 以下函数的其余部分保持不变...
 
 function executeRequest($url, $method, $request_headers, $hostsMap, $timeout, $proxy_address, $proxy_username, $proxy_password, $follow_redirects, $max_redirects) {
     $redirects = [];
@@ -508,20 +564,21 @@ function executeRequest($url, $method, $request_headers, $hostsMap, $timeout, $p
                 'size' => 0,
                 'time' => 0,
                 'redirect_count' => $redirect_count,
-                'redirects' => $redirects
+                'redirects' => $redirects,
+                'error_type' => 'url_invalid',
+                'proxy_error' => false,
+                'error_details' => 'URL格式无效',
+                'proxy_used' => !empty($proxy_address)
             ];
         }
 
         $scheme = $parsed['scheme'];
-        $host   = $parsed['host'];
-        $port   = $parsed['port'] ?? ($scheme === 'https' ? 443 : 80);
-        $path   = ($parsed['path'] ?? '/') . (isset($parsed['query']) ? '?' . $parsed['query'] : '');
+        $host = $parsed['host'];
+        $port = $parsed['port'] ?? ($scheme === 'https' ? 443 : 80);
+        $path = ($parsed['path'] ?? '/') . (isset($parsed['query']) ? '?' . $parsed['query'] : '');
 
-        // 检查是否为媒体文件（通过URL后缀）
         $isMediaUrl = false;
         $urlPath = $parsed['path'] ?? '';
-        
-        // 媒体文件扩展名列表（不包括M3U8，因为我们想要获取M3U8的内容）
         $mediaExtensions = ['.flv', '.mp4', '.ts', '.avi', '.mkv', '.mov', '.wmv', '.webm'];
         
         if ($urlPath) {
@@ -534,7 +591,6 @@ function executeRequest($url, $method, $request_headers, $hostsMap, $timeout, $p
             }
         }
 
-        // 关键修复：每次请求都检查当前域名是否在 Hosts 映射中
         $target_ip = $hostsMap[$host] ?? null;
         $request_url = $current_url;
 
@@ -545,23 +601,22 @@ function executeRequest($url, $method, $request_headers, $hostsMap, $timeout, $p
             curl_setopt($ch, CURLOPT_RESOLVE, ["{$host}:{$port}:{$target_ip}"]);
         }
 
-        // 对于媒体文件，使用HEAD请求只获取头部
         $curlOptions = [
             CURLOPT_URL => $request_url,
             CURLOPT_CUSTOMREQUEST => $method,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HEADER => true,
             CURLOPT_TIMEOUT => $timeout,
-            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_CONNECTTIMEOUT => 16,
             CURLOPT_SSL_VERIFYHOST => false,
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_FOLLOWLOCATION => false,
             CURLOPT_FRESH_CONNECT => true,
-            CURLOPT_ENCODING => '', // 自动处理压缩
+            CURLOPT_ENCODING => '',
             CURLOPT_USERAGENT => $request_headers['User-Agent'] ?? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            CURLOPT_FAILONERROR => false,
         ];
         
-        // 对于媒体文件，使用HEAD请求只获取头部
         if ($isMediaUrl) {
             $curlOptions[CURLOPT_NOBODY] = true;
             $curlOptions[CURLOPT_CUSTOMREQUEST] = 'HEAD';
@@ -569,16 +624,16 @@ function executeRequest($url, $method, $request_headers, $hostsMap, $timeout, $p
 
         curl_setopt_array($ch, $curlOptions);
 
-        // ==================== 修改：支持带认证的SOCKS5代理 ====================
         if ($proxy_address) {
             curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
             curl_setopt($ch, CURLOPT_PROXY, $proxy_address);
             curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
             
-            // 如果提供了用户名和密码，则设置代理认证
             if (!empty($proxy_username) && !empty($proxy_password)) {
                 curl_setopt($ch, CURLOPT_PROXYUSERPWD, $proxy_username . ':' . $proxy_password);
             }
+            
+            curl_setopt($ch, CURLOPT_PROXYTIMEOUT, 10);
         }
 
         $headers_array = ["Host: {$host}", "Connection: close"];
@@ -592,84 +647,135 @@ function executeRequest($url, $method, $request_headers, $hostsMap, $timeout, $p
         $resp = curl_exec($ch);
         $info = curl_getinfo($ch);
         $error = curl_error($ch);
+        $errno = curl_errno($ch);
         curl_close($ch);
 
-        // 处理请求响应
-        $headers = [];
-        $body = '';
+        $isProxyTimeout = false;
+        $isUrlTimeout = false;
+        $errorDetails = '';
+        $errorType = 'general_error';
         
         if ($resp === false) {
-            // 请求失败（如超时）
             $status_code = 504;
-            $body = $error;
-            $header_str = '';
             
-            // 记录CURL错误
-            logRequest("CURL请求失败", [
-                'url' => $request_url,
-                'error' => $error
-            ]);
+            switch ($errno) {
+                case CURLE_COULDNT_CONNECT:
+                case CURLE_COULDNT_RESOLVE_PROXY:
+                    if ($proxy_address) {
+                        $isProxyTimeout = true;
+                        $errorType = 'proxy_timeout';
+                        $errorDetails = "无法连接到SOCKS5代理服务器: {$proxy_address}";
+                    } else {
+                        $errorType = 'url_timeout';
+                        $errorDetails = "无法连接到目标服务器: {$error}";
+                    }
+                    break;
+                    
+                case CURLE_OPERATION_TIMEDOUT:
+                    if ($proxy_address && $info['connect_time'] > 0 && $info['pretransfer_time'] == 0) {
+                        $isProxyTimeout = true;
+                        $errorType = 'proxy_timeout';
+                        $errorDetails = "SOCKS5代理连接超时: 连接到代理服务器 {$proxy_address} 超时 ({$timeout}s)";
+                    } else if ($info['http_code'] == 0 && $info['total_time'] >= $timeout) {
+                        if ($proxy_address) {
+                            $errorType = 'proxy_timeout';
+                            $errorDetails = "通过SOCKS5代理访问目标URL超时";
+                            $isProxyTimeout = true;
+                        } else {
+                            $errorType = 'url_timeout';
+                            $errorDetails = "目标URL访问超时: ({$timeout}s)";
+                        }
+                    } else {
+                        $errorType = 'url_timeout';
+                        $errorDetails = "请求超时: {$error}";
+                    }
+                    break;
+                    
+                case CURLE_GOT_NOTHING:
+                    if ($proxy_address) {
+                        $errorType = 'proxy_timeout';
+                        $errorDetails = "通过SOCKS5代理访问时服务器未返回数据";
+                        $isProxyTimeout = true;
+                    } else {
+                        $errorType = 'url_timeout';
+                        $errorDetails = "服务器未返回数据: {$error}";
+                    }
+                    break;
+                    
+                default:
+                    if ($proxy_address) {
+                        $errorType = 'proxy_timeout';
+                        $errorDetails = "通过SOCKS5代理访问失败: {$error} (CURL错误码: {$errno})";
+                        if (strpos($error, 'proxy') !== false || strpos($error, 'socks') !== false) {
+                            $isProxyTimeout = true;
+                        }
+                    } else {
+                        $errorType = 'url_timeout';
+                        $errorDetails = "请求失败: {$error} (CURL错误码: {$errno})";
+                    }
+            }
+            
+            $body = $errorDetails;
+            $header_str = '';
         } else {
-            // 请求成功
             $header_size = $info['header_size'];
             $header_str = substr($resp, 0, $header_size);
-            
-            // 对于媒体文件，body应该是空的（因为使用了HEAD请求）
-            // 对于其他文件，获取完整的body
             $body = $isMediaUrl ? '' : substr($resp, $header_size);
-            
             $headers = parseHeaders($header_str);
             $status_code = $info['http_code'];
         }
         
-        // 总是记录请求到重定向链（无论成功还是失败）
         $redirects[] = [
             'url' => $current_url,
             'status_code' => $status_code,
-            'response_headers' => $headers,
-            'time' => $info['total_time']
+            'response_headers' => $headers ?? [],
+            'time' => $info['total_time'],
+            'error_details' => $errorDetails ?? null,
+            'is_proxy_error' => $isProxyTimeout,
+            'curl_error_code' => $errno ?? null,
+            'curl_error_message' => $error ?? null
         ];
 
-        // 如果是失败的请求，直接返回
         if ($resp === false) {
             return [
                 'url' => $url,
                 'final_url' => $current_url,
                 'status_code' => $status_code,
-                'headers' => $headers,
+                'headers' => $headers ?? [],
                 'body' => $body,
                 'size' => strlen($body),
                 'time' => $info['total_time'],
                 'redirect_count' => $redirect_count,
-                'redirects' => $redirects
+                'redirects' => $redirects,
+                'error_type' => $errorType,
+                'proxy_error' => $isProxyTimeout,
+                'error_details' => $errorDetails,
+                'curl_error_code' => $errno,
+                'curl_error_message' => $error,
+                'proxy_used' => !empty($proxy_address)
             ];
         }
 
-        // 保存最终响应信息
-        $final_headers = $headers;
+        $final_headers = $headers ?? [];
         $final_body = $body;
         $final_status = $status_code;
         $final_time = $info['total_time'];
 
-        // 检查是否需要继续重定向
-        if (
-            $follow_redirects &&
+        if ($follow_redirects &&
             $final_status >= 300 &&
             $final_status < 400 &&
-            isset($headers['location']) &&
-            $redirect_count < $max_redirects
-        ) {
-            $new_url = is_absolute_url($headers['location'])
-                ? $headers['location']
-                : resolve_relative_url($current_url, $headers['location']);
+            isset($final_headers['location']) &&
+            $redirect_count < $max_redirects) {
             
-            // 重要：更新当前 URL 并继续循环
+            $new_url = is_absolute_url($final_headers['location'])
+                ? $final_headers['location']
+                : resolve_relative_url($current_url, $final_headers['location']);
+            
             $current_url = $new_url;
             $redirect_count++;
             continue;
         }
 
-        // 不需要重定向，跳出循环
         break;
     }
 
@@ -682,11 +788,15 @@ function executeRequest($url, $method, $request_headers, $hostsMap, $timeout, $p
         'size' => strlen($final_body),
         'time' => $final_time,
         'redirect_count' => $redirect_count,
-        'redirects' => $redirects
+        'redirects' => $redirects,
+        'error_type' => null,
+        'proxy_error' => false,
+        'error_details' => null,
+        'curl_error_code' => null,
+        'curl_error_message' => null,
+        'proxy_used' => !empty($proxy_address)
     ];
 }
-
-/* ========= 工具函数（修复大小写敏感问题） ========= */
 
 function is_absolute_url($url) {
     return preg_match('/^https?:\/\//i', $url);
@@ -708,9 +818,67 @@ function parseHeaders($header_str) {
     foreach (explode("\r\n", $header_str) as $line) {
         if (strpos($line, ':') !== false) {
             [$k, $v] = explode(':', $line, 2);
-            // 修复：将 header 名转换为小写，避免大小写问题
             $headers[strtolower(trim($k))] = trim($v);
         }
     }
     return $headers;
+}
+
+// 新增辅助函数：根据内容类型获取扩展名
+function getExtensionFromContentType($contentType) {
+    $contentType = strtolower($contentType);
+    
+    $extensions = [
+        'application/json' => '.json',
+        'text/json' => '.json',
+        'application/javascript' => '.js',
+        'text/javascript' => '.js',
+        'application/xml' => '.xml',
+        'text/xml' => '.xml',
+        'text/html' => '.html',
+        'text/plain' => '.txt',
+        'text/css' => '.css',
+        'application/pdf' => '.pdf',
+        'image/jpeg' => '.jpg',
+        'image/png' => '.png',
+        'image/gif' => '.gif',
+        'image/webp' => '.webp',
+        'image/svg+xml' => '.svg',
+        'application/x-mpegurl' => '.m3u8',
+        'application/vnd.apple.mpegurl' => '.m3u8',
+        'audio/x-mpegurl' => '.m3u8',
+        'video/mp4' => '.mp4',
+        'video/mpeg' => '.mpeg',
+        'video/quicktime' => '.mov',
+        'video/x-msvideo' => '.avi',
+        'video/x-flv' => '.flv',
+        'video/x-matroska' => '.mkv',
+        'video/webm' => '.webm',
+        'audio/mpeg' => '.mp3',
+        'audio/ogg' => '.ogg',
+        'audio/wav' => '.wav',
+        'audio/webm' => '.weba',
+        'audio/aac' => '.aac',
+        'audio/x-aac' => '.aac',
+        'audio/flac' => '.flac',
+        'application/zip' => '.zip',
+        'application/x-gzip' => '.gz',
+        'application/x-tar' => '.tar',
+        'application/x-rar-compressed' => '.rar',
+        'application/x-7z-compressed' => '.7z',
+    ];
+    
+    return $extensions[$contentType] ?? '.bin';
+}
+
+// 新增辅助函数：确保文件名有正确的扩展名
+function ensureFileExtension($filename, $contentType) {
+    // 检查是否已有扩展名
+    if (strpos($filename, '.') !== false) {
+        return $filename;
+    }
+    
+    // 没有扩展名，添加一个
+    $extension = getExtensionFromContentType($contentType);
+    return $filename . $extension;
 }

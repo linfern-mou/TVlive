@@ -5,6 +5,10 @@
     font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     color: #f1f1f1;
@@ -36,6 +40,7 @@ h1 {
     background-clip: text;
     color: transparent;
 }
+
 
 .subtitle {
     font-size: 1rem;
@@ -73,7 +78,7 @@ h1 {
 }
 
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
 label {
@@ -102,9 +107,10 @@ input:focus, select:focus, textarea:focus {
 }
 
 .input-row {
-    display: flex;
+display: flex;
+    align-items: center;
     gap: 12px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 .input-row .form-group {
@@ -116,7 +122,7 @@ input:focus, select:focus, textarea:focus {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 15px;
+    margin-bottom: 0px;
     font-size: 0.95rem;
 }
 
@@ -124,6 +130,7 @@ input:focus, select:focus, textarea:focus {
     width: auto;
 }
 
+/* ==================== 按钮基础样式 ==================== */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -140,6 +147,9 @@ input:focus, select:focus, textarea:focus {
     transition: all 0.3s ease;
     white-space: nowrap;
     flex-shrink: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
 }
 
 .btn:hover {
@@ -154,6 +164,12 @@ input:focus, select:focus, textarea:focus {
 
 .btn i {
     font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.btn span {
+
+    text-align: center;
 }
 
 .btn-batch {
@@ -161,6 +177,9 @@ input:focus, select:focus, textarea:focus {
     font-size: 1.1rem;
     padding: 14px 24px;
     min-width: 180px;
+    width: 100%;
+    max-width: 100%;
+    text-align: center;
 }
 
 .btn-batch:hover {
@@ -184,6 +203,154 @@ input:focus, select:focus, textarea:focus {
     gap: 10px;
     align-items: center;
     flex-wrap: wrap;
+    width: 100%;
+}
+
+/* PC端：开始/停止按钮占满一行 */
+#stop-batch-test {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+    padding: 14px 24px;
+    font-size: 1.1rem;
+    width: 100%;
+    max-width: 100%;
+    text-align: center;
+}
+
+#stop-batch-test:hover {
+    background: linear-gradient(90deg, #d97706, #f59e0b);
+    box-shadow: 0 7px 15px rgba(245, 158, 11, 0.4);
+}
+
+/* ==================== PC端按钮布局 ==================== */
+
+/* 批量控制按钮组 */
+.batch-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+.batch-controls .btn {
+    min-width: 150px;
+    font-size: 0.95rem;
+    padding: 10px 12px;
+    height: 44px;
+    justify-content: center;
+}
+
+.batch-controls label.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin: 0;
+    position: relative;
+    max-width: 100%;
+}
+
+.batch-controls label.btn input[type="file"] {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+}
+
+#url-count {
+    color: #94a3b8;
+    font-size: 0.95rem;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 0 5px;
+    margin-left: auto;
+}
+
+/* 批量操作按钮组 */
+.batch-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 15px;
+    width: 100%;
+}
+
+.batch-actions .btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    justify-content: center;
+}
+
+/* 日志操作按钮组 */
+.log-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.log-actions .btn {
+    flex: 1;
+    min-width: 100px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    justify-content: center;
+}
+
+/* 测试记录控制按钮组 - PC端布局 */
+.records-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    width: 100%;
+}
+
+.records-controls .btn {
+ 
+    min-width: 150px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    justify-content: center;
+}
+
+#records-count {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 0 5px;
+    margin-left: auto;
+}
+
+/* 历史日志控制按钮组 - PC端 */
+#historical-logs {
+    flex: 2;
+    padding: 8px;
+    min-width: 33%;
+}
+
+#load-historical-log, #clear-historical-logs {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    justify-content: center;
+}
+
+/* 历史日志按钮容器 */
+.button-container {
+    display: flex;
+    gap: 10px;
+    width: 100%;
 }
 
 .batch-stats {
@@ -220,17 +387,25 @@ input:focus, select:focus, textarea:focus {
     text-align: center;
 }
 
+/* 测试结果区域 */
 .batch-results {
     margin-top: 15px;
     overflow-x: auto;
     max-width: 100%;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #2a2a4a;
+    border-radius: 6px;
+    padding: 5px;
+    background: rgba(10, 10, 20, 0.3);
+    scroll-margin-top: 20px;
 }
 
 .batch-result-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.85rem;
-    min-width: 800px; /* 确保需要横向滚动 */
+    min-width: 800px;
 }
 
 .batch-result-table th, .batch-result-table td {
@@ -239,13 +414,12 @@ input:focus, select:focus, textarea:focus {
     border-bottom: 1px solid #2a2a4a;
 }
 
-.batch-actions {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-top: 15px;
+/* 隐藏导出CSV按钮 */
+#export-results-btn {
+    display: none !important;
 }
 
+/* ==================== 日志样式 ==================== */
 .log-box {
     background: rgba(10, 10, 20, 0.8);
     border-radius: 6px;
@@ -255,6 +429,7 @@ input:focus, select:focus, textarea:focus {
     max-height: 300px;
     overflow-y: auto;
     margin-top: 8px;
+    scroll-margin-top: 20px;
 }
 
 .log-entry {
@@ -263,31 +438,60 @@ input:focus, select:focus, textarea:focus {
     border-bottom: 1px dashed #2a2a4a;
     display: flex;
     align-items: flex-start;
-    flex-wrap: wrap;
+    gap: 5px;
+    flex-wrap: nowrap;
+    width: 100%;
+    line-height: 1.4;
 }
 
 .log-time {
     color: #94a3b8;
-    margin-right: 8px;
     white-space: nowrap;
     font-size: 0.8rem;
     flex-shrink: 0;
+    min-width: 65px;
+    margin-top: 1px;
 }
 
+/* 不同级别的日志颜色 */
 .log-info {
     color: #4cc9f0;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.85rem;
 }
 
 .log-success {
     color: #4ade80;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.85rem;
 }
 
 .log-error {
     color: #f87171;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.85rem;
 }
 
 .log-warning {
     color: #fbbf24;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.85rem;
 }
 
 .status-code {
@@ -319,36 +523,6 @@ input:focus, select:focus, textarea:focus {
     color: #60a5fa;
 }
 
-.connection-info {
-    background: rgba(30, 30, 50, 0.5);
-    border-radius: 5px;
-    padding: 10px;
-    margin-top: 8px;
-    font-size: 0.8rem;
-    border-left: 3px solid #4361ee;
-    width: 100%;
-}
-
-.info-row {
-    display: flex;
-    margin-bottom: 4px;
-    flex-wrap: wrap;
-}
-
-.info-label {
-    color: #94a3b8;
-    min-width: 80px;
-    font-size: 0.8rem;
-    flex-shrink: 0;
-}
-
-.info-value {
-    color: #f1f1f1;
-    word-break: break-all;
-    font-size: 0.8rem;
-    flex: 1;
-}
-
 .auth-fields {
     display: none;
 }
@@ -371,13 +545,6 @@ input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: #4361ee;
     box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.3);
-}
-
-.batch-controls {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
 }
 
 .progress-bar {
@@ -429,36 +596,6 @@ input:focus, select:focus, textarea:focus {
     text-align: center;
 }
 
-#current-test-url {
-    color: #94a3b8;
-    margin: 15px 0;
-    max-width: 90%;
-    word-break: break-all;
-    text-align: center;
-}
-
-.loading-progress {
-    width: 80%;
-    max-width: 500px;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    overflow: hidden;
-    margin-top: 10px;
-}
-
-.loading-progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #4cc9f0, #4361ee);
-    width: 0%;
-    transition: width 0.3s ease;
-}
-
-#loading-progress-text {
-    margin-top: 10px;
-    color: #94a3b8;
-}
-
 /* 测试记录样式 */
 .records-list {
     background: rgba(10, 10, 20, 0.8);
@@ -467,6 +604,7 @@ input:focus, select:focus, textarea:focus {
     max-height: 300px;
     overflow-y: auto;
     border: 1px solid #2a2a4a;
+    scroll-margin-top: 20px;
 }
 
 .record-empty {
@@ -483,7 +621,7 @@ input:focus, select:focus, textarea:focus {
     opacity: 0.5;
 }
 
-/* 新版紧凑测试记录样式 */
+/* 测试记录样式 */
 .record-compact {
     background: rgba(30, 35, 55, 0.6);
     border-radius: 10px;
@@ -506,7 +644,7 @@ input:focus, select:focus, textarea:focus {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     font-size: 0.85rem;
 }
 
@@ -521,18 +659,26 @@ input:focus, select:focus, textarea:focus {
     padding: 2px 8px;
     border-radius: 4px;
     font-size: 0.8rem;
+    max-width: 220px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: help;
 }
 
-/* ==================== 测试记录URL显示优化 ==================== */
+/* 测试记录URL显示 */
 .record-compact .record-url {
     color: #e0e0e0;
-    white-space: nowrap; /* 确保不换行 */
+    white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; /* 超出部分显示省略号 */
-    margin-bottom: 6px;
+    text-overflow: ellipsis;
+    margin-bottom: 8px;
     font-size: 0.88rem;
     line-height: 1.4;
-    padding-right: 30px; /* 留出删除按钮空间 */
+    padding-right: 30px;
+    width: 100%;
+    display: block;
+    min-height: 20px;
 }
 
 .record-stats {
@@ -540,6 +686,7 @@ input:focus, select:focus, textarea:focus {
     justify-content: space-between;
     font-size: 0.85rem;
     color: #b0b0d0;
+    margin-top: 5px;
 }
 
 .record-url-count {
@@ -589,27 +736,30 @@ input:focus, select:focus, textarea:focus {
     color: #f87171;
 }
 
-/* ==================== 测试结果表格URL单元格优化 ==================== */
+/* 测试结果表格URL单元格优化 */
 .batch-result-table .url-cell {
-    max-width: 400px;
-    white-space: nowrap; /* 确保不换行 */
+    max-width: 600px;
+    min-width: 400px;
+    white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; /* 超出部分显示省略号 */
+    text-overflow: ellipsis;
     line-height: 1.4;
+    padding: 8px 10px;
+    position: relative;
 }
 
-/* 详细信息单元格优化 - 添加鼠标悬停提示 */
+/* 详细信息单元格优化 */
 .batch-result-table .details-cell {
     min-width: 120px;
     max-width: 180px;
-    white-space: nowrap; /* 确保不换行 */
+    white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; /* 超出部分显示省略号 */
-    position: relative; /* 为tooltip定位做准备 */
+    text-overflow: ellipsis;
+    position: relative;
 }
 
+/* ==================== 移动端适配 ==================== */
 
-/* 移动端适配 */
 @media (max-width: 768px) {
     .container {
         padding: 8px 5px;
@@ -644,53 +794,292 @@ input:focus, select:focus, textarea:focus {
         min-width: 100%;
     }
     
-    .btn-group {
-        flex-direction: column;
-        width: 100%;
-    }
-    
-    .btn-group .btn {
+    /* 开始/停止按钮 */
+    .btn-batch, #stop-batch-test {
         width: 100%;
         max-width: 100%;
+        padding: 12px 16px !important;
+        font-size: 1rem;
         margin: 5px 0;
     }
     
-    .btn-clear {
-        width: 100%;
-        max-width: 100%;
-    }
-    
-    .log-entry {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .log-time {
-        margin-bottom: 4px;
-        margin-right: 0;
-    }
-    
-    .log-actions {
-        justify-content: center;
-        gap: 8px;
-    }
-    
-    .log-actions .btn-clear {
-        flex: 1;
-        min-width: 120px;
-        max-width: 45%;
-        font-size: 0.85rem;
-        padding: 10px 12px;
-    }
-    
+    /* 批量控制按钮组 - 手机端三个按钮铺满一行 */
     .batch-controls {
-        flex-direction: column;
-        align-items: stretch;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 6px;
+        width: 100%;
+        margin-top: 10px;
     }
     
     .batch-controls .btn {
+ 
+        min-width: 0;
+        max-width: none;
+        width: calc(33.333% - 4px);
+        padding: 8px 6px !important;
+        font-size: 0.85rem;
+        height: 36px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
+    
+    .batch-controls .btn i {
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+    
+    .batch-controls .btn span {
+      
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-align: center;
+        font-size: 0.85rem;
+    }
+    
+    #url-count {
+        order: 4;
+        flex: 0 0 100%;
+        text-align: center;
+        margin: 8px 0 0 0;
+        padding: 0;
+        font-size: 0.85rem;
         width: 100%;
-        margin: 5px 0;
+        margin-left: 0;
+    }
+    
+    /* 批量操作按钮组 - 手机端两个按钮铺满一行 */
+    .batch-actions {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 6px;
+        width: 100%;
+        margin-top: 10px;
+    }
+    
+    .batch-actions .btn {
+     
+        min-width: 0;
+        max-width: none;
+        width: calc(50% - 3px);
+        padding: 10px 8px !important;
+        font-size: 0.85rem;
+        height: 40px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
+    
+    .batch-actions .btn i {
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+    
+    .batch-actions .btn span {
+    
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-align: center;
+        font-size: 0.85rem;
+    }
+    
+    /* 日志操作按钮组 - 手机端三个按钮铺满一行 */
+    .log-actions {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 6px;
+        width: 100%;
+        margin-top: 10px;
+    }
+    
+    .log-actions .btn {
+    
+        min-width: 0;
+        max-width: none;
+        width: calc(33.333% - 4px);
+        padding: 9px 6px !important;
+        font-size: 0.8rem;
+        height: 36px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+    }
+    
+    .log-actions .btn i {
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+    
+    .log-actions .btn span {
+       
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-align: center;
+        font-size: 0.8rem;
+    }
+    
+    /* 测试记录控制按钮组 - 手机端：按钮和计数在同一行 */
+    .records-controls {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        margin-bottom: 12px;
+    }
+    
+    .records-controls .btn {
+      
+        min-width: 0;
+        max-width: calc(70% - 4px);
+        padding: 9px 10px !important;
+        font-size: 0.85rem;
+        height: 36px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
+    
+    .records-controls .btn i {
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+    
+    .records-controls .btn span {
+       
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-align: center;
+        font-size: 0.85rem;
+    }
+    
+    #records-count {
+        flex: 0 0 auto;
+        margin-left: 0;
+        padding: 0;
+        font-size: 0.85rem;
+        text-align: right;
+        width: calc(30% - 4px);
+    }
+    
+/* ==================== 历史日志布局优化（PC端同一行，移动端垂直） ==================== */
+
+/* 覆盖原有的 .input-row（只针对测试日志卡片内的） */
+#test-log-card .form-group > div[class="input-row"] {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: nowrap;          /* PC端强制不换行 */
+}
+
+/* 下拉框占主要宽度 */
+#historical-logs {
+    flex: 1;
+    min-width: 220px;
+    max-width: none;
+}
+
+/* 按钮容器：紧贴下拉框右侧，不占满整行 */
+.button-container {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;             /* 防止被压缩 */
+    width: auto !important;     /* 关键：覆盖原来的 width: 100% */
+}
+
+/* 两个按钮在PC端正常大小 */
+#load-historical-log,
+#clear-historical-logs {
+    white-space: nowrap;
+    padding: 10px 16px;
+    min-width: 110px;
+    flex: none;                 /* 不要拉伸 */
+}
+
+/* 移动端恢复垂直布局（覆盖上面规则） */
+@media (max-width: 768px) {
+    #test-log-card .form-group > div[class="input-row"] {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    #historical-logs {
+        width: 100%;
+        flex: none;
+    }
+
+    .button-container {
+        width: 100% !important;
+        margin-top: 5px;
+    }
+
+    #load-historical-log,
+    #clear-historical-logs {
+        flex: 1;
+        padding: 10px 12px;
+        min-width: 0;
+    }
+}
+    
+    #load-historical-log, #clear-historical-logs {
+        flex: 1;
+        min-width: 0;
+        max-width: none;
+        width: calc(50% - 3px);
+        padding: 9px 8px !important;
+        font-size: 0.85rem;
+        height: 36px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
+    
+    #load-historical-log i, #clear-historical-logs i {
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+    
+    #load-historical-log span, #clear-historical-logs span {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-align: center;
+        font-size: 0.85rem;
+    }
+    
+    .log-time {
+        min-width: 55px;
+        font-size: 0.75rem;
+    }
+    
+    .log-info, .log-success, .log-error, .log-warning {
+        max-width: calc(100% - 60px);
+        font-size: 0.8rem;
     }
     
     .batch-stats {
@@ -712,19 +1101,6 @@ input:focus, select:focus, textarea:focus {
         font-size: 0.75rem;
     }
     
-    .batch-actions {
-        justify-content: center;
-        gap: 8px;
-    }
-    
-    .batch-actions .btn {
-        flex: 1;
-        min-width: 140px;
-        max-width: 45%;
-        font-size: 0.9rem;
-        padding: 10px 12px;
-    }
-    
     .batch-result-table {
         font-size: 0.8rem;
         min-width: 700px;
@@ -735,25 +1111,15 @@ input:focus, select:focus, textarea:focus {
         padding: 6px 8px;
     }
     
-    /* 移动端适配调整 */
-    .record-compact .record-url {
-        max-height: 2.8rem;
-        font-size: 0.85rem;
-        -webkit-line-clamp: 2;
-    }
-    
+    /* 移动端URL单元格优化 */
     .batch-result-table .url-cell {
-        max-width: 200px;
+        max-width: 300px;
+        min-width: 200px;
         font-size: 0.8rem;
     }
     
-    .batch-result-table .details-cell {
-        max-width: 120px;
-        font-size: 0.8rem;
-    }
-    
-    .url-cell {
-        max-width: 150px;
+    .record-compact .record-url {
+        font-size: 0.85rem;
     }
     
     .loading-text {
@@ -769,56 +1135,17 @@ input:focus, select:focus, textarea:focus {
         font-size: 0.8rem;
         padding-top: 10px;
         margin-top: 20px;
-    }
-    
-    .records-controls {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .records-controls .btn {
+        text-align: center !important;
         width: 100%;
-        margin: 5px 0;
-    }
-    
-    .record-item {
-        padding: 12px 15px 12px 12px;
-    }
-    
-    .record-item-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
-        margin-bottom: 8px;
     }
     
     .record-proxy {
-        align-self: flex-start;
-    }
-    
-    .record-actions {
-        position: relative;
-        top: 0;
-        right: 0;
-        opacity: 1;
-        margin-top: 8px;
-        justify-content: flex-end;
-    }
-    
-    .record-details {
-        flex-direction: column;
-        gap: 5px;
-    }
-    
-    .mobile-btn {
-        padding: 10px 12px !important;
-        font-size: 14px !important;
-        min-width: 120px !important;
+        max-width: 200px;
     }
     
     input, textarea, select {
-        font-size: 16px !important; /* 防止iOS自动缩放 */
-        padding: 10px !important;
+        font-size: 14px !important;
+        padding: 8px !important;
     }
     
     .checkbox-group {
@@ -865,16 +1192,91 @@ input:focus, select:focus, textarea:focus {
         font-size: 0.7rem;
     }
     
-    .log-actions .btn-clear,
-    .batch-actions .btn {
-        min-width: 110px;
+    /* 小屏幕按钮优化 */
+    .batch-controls .btn {
+        padding: 7px 5px !important;
         font-size: 0.8rem;
-        padding: 8px 10px;
+        height: 34px;
+        gap: 2px;
     }
     
-    .btn-batch,
-    .btn-export-results {
-        min-width: 120px;
+    .batch-controls .btn i {
+        font-size: 0.8rem;
+    }
+    
+    .batch-controls .btn span {
+        font-size: 0.8rem;
+    }
+    
+    .batch-actions .btn {
+        padding: 9px 6px !important;
+        font-size: 0.8rem;
+        height: 38px;
+    }
+    
+    .batch-actions .btn i {
+        font-size: 0.85rem;
+    }
+    
+    .batch-actions .btn span {
+        font-size: 0.8rem;
+    }
+    
+    .log-actions .btn {
+        padding: 8px 5px !important;
+        font-size: 0.75rem;
+        height: 34px;
+    }
+    
+    .log-actions .btn i {
+        font-size: 0.8rem;
+    }
+    
+    .log-actions .btn span {
+        font-size: 0.75rem;
+    }
+    
+    .records-controls .btn {
+        padding: 8px 6px !important;
+        font-size: 0.8rem;
+        height: 34px;
+    }
+    
+    .records-controls .btn i {
+        font-size: 0.8rem;
+    }
+    
+    .records-controls .btn span {
+        font-size: 0.8rem;
+    }
+    
+    #records-count {
+        font-size: 0.8rem;
+    }
+    
+    /* 历史日志按钮 */
+    #load-historical-log, #clear-historical-logs {
+        padding: 8px 5px !important;
+        font-size: 0.75rem;
+        height: 34px;
+    }
+    
+    #load-historical-log i, #clear-historical-logs i {
+        font-size: 0.8rem;
+    }
+    
+    #load-historical-log span, #clear-historical-logs span {
+        font-size: 0.75rem;
+    }
+    
+    .log-time {
+        min-width: 50px;
+        font-size: 0.7rem;
+    }
+    
+    .log-info, .log-success, .log-error, .log-warning {
+        max-width: calc(100% - 55px);
+        font-size: 0.75rem;
     }
     
     .batch-result-table {
@@ -882,27 +1284,65 @@ input:focus, select:focus, textarea:focus {
         min-width: 800px;
     }
     
+    .batch-result-table .url-cell {
+        max-width: 200px;
+        min-width: 150px;
+        font-size: 0.75rem;
+    }
+    
     .records-list {
         max-height: 250px;
     }
     
-    .record-item {
-        padding: 10px 12px 10px 10px;
-    }
-    
-    .record-url {
-        font-size: 0.85rem;
-    }
-    
-    /* 移动端更小屏幕适配 */
     .record-compact .record-url {
         font-size: 0.85rem;
-        max-width: calc(100% - 30px); /* 确保不超出容器 */
+    }
+}
+
+/* 超小屏幕特殊处理 */
+@media (max-width: 360px) {
+    .batch-controls .btn span,
+    .batch-actions .btn span,
+    .log-actions .btn span,
+    .records-controls .btn span,
+    #load-historical-log span,
+    #clear-historical-logs span {
+        font-size: 0.7rem;
     }
     
-    .batch-result-table .url-cell {
-        max-width: 150px;
+    .batch-controls .btn {
+        padding: 6px 4px !important;
         font-size: 0.75rem;
+    }
+    
+    .batch-actions .btn {
+        padding: 8px 5px !important;
+        font-size: 0.75rem;
+    }
+    
+    .log-actions .btn {
+        padding: 7px 4px !important;
+        font-size: 0.7rem;
+    }
+    
+    /* 超小屏幕只显示图标，隐藏文字 */
+    .batch-controls .btn span:not(.fas),
+    .batch-actions .btn span:not(.fas),
+    .log-actions .btn span:not(.fas),
+    .records-controls .btn span:not(.fas),
+    #load-historical-log span,
+    #clear-historical-logs span {
+        display: none;
+    }
+    
+    .batch-controls .btn,
+    .batch-actions .btn,
+    .log-actions .btn,
+    .records-controls .btn,
+    #load-historical-log,
+    #clear-historical-logs {
+        justify-content: center;
+        min-width: 40px;
     }
 }
 
@@ -939,7 +1379,7 @@ input:focus, select:focus, textarea:focus {
     select,
     textarea,
     input {
-        font-size: 16px !important;
+        font-size: 14px !important;
     }
 }
 
@@ -958,26 +1398,53 @@ input:focus, select:focus, textarea:focus {
         transform: none;
     }
     
-    .record-actions {
-        opacity: 1;
-    }
-    
     .btn:active {
         transform: scale(0.98);
     }
 }
 
-/* 横向滚动条样式 */
-.batch-results::-webkit-scrollbar {
-    height: 8px;
+/* ==================== 统一滚动条样式 ==================== */
+
+/* 针对 Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #4cc9f0 rgba(0, 0, 0, 0.2);
 }
 
-.batch-results::-webkit-scrollbar-track {
+/* 针对 Chrome, Edge, Safari */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px; /* 横向滚动条高度 */
+}
+
+::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.2);
     border-radius: 4px;
 }
 
-.batch-results::-webkit-scrollbar-thumb {
-    background: #4361ee;
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #4cc9f0, #4361ee);
     border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #4cc9f0;
+}
+
+/* 特殊容器的滚动条边缘修正 */
+.batch-results, .log-box, .records-list {
+    scrollbar-gutter: stable; /* 防止滚动条出现时页面抖动 */
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+footer {
+    font-size: 0.8rem;
+    padding-top: 10px;
+    margin-top: 20px;
+    text-align: center;
+    width: 100%;
 }

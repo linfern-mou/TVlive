@@ -11,7 +11,7 @@
     <div class="container">
         <header>
             <h1><i class="fas fa-broadcast-tower"></i> SOCKS5代理直播源测试工具</h1>
-            <p class="subtitle">测试直播源通过SOCKS5代理的可用性。</p>
+            <p class="subtitle">测试直播源通过SOCKS5代理的可用性，支持频道名+分组格式、TXT导入及测试报告导出</p>
         </header>
         
         <main>
@@ -30,20 +30,14 @@
                 <div id="auth-fields" class="auth-fields">
                     <div class="input-row">
                         <div class="form-group">
-                            <label for="proxy-username">代理用户名 (可选)</label>
+                            <label for="proxy-username">用户名 (可选)</label>
                             <input type="text" id="proxy-username" placeholder="如果代理需要验证">
                         </div>
                         <div class="form-group">
-                            <label for="proxy-password">代理密码 (可选)</label>
+                            <label for="proxy-password">密码 (可选)</label>
                             <input type="password" id="proxy-password" placeholder="如果代理需要验证">
                         </div>
                     </div>
-                </div>
-                
-                <!-- 隐藏 PHP 后端 API 地址 -->
-                <div class="form-group" style="display: none;">
-                    <label for="api-url">PHP后端API地址</label>
-                    <input type="text" id="api-url" placeholder="例如: https://your-domain.com/api.php" value="api.php">
                 </div>
 
                 <div class="checkbox-group" style="margin-top: 10px;">
@@ -53,16 +47,37 @@
             </div>
             
             <div class="card">
-                <h2 class="card-title"><i class="fas fa-list-ol"></i> 批量URL配置</h2>
+                <h2 class="card-title"><i class="fas fa-list-ol"></i> 批量频道配置</h2>
                 <div class="form-group">
-                    <label for="batch-urls">URL列表（一行一个URL）</label>
-                    <textarea id="batch-urls" rows="5" class="batch-textarea" placeholder="每行输入一个直播源URL，例如：
-http://tvgslb.hn.chinamobile.com:8089/180000001002/00000001000000000099000000193885/main.m3u8
-https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
-http://playertest.longtailvideo.com/adaptive/bipbop/gear4/prog_index.m3u8"></textarea>
+                    <label for="batch-urls">频道列表（支持 #genre# 分组和 "频道名,URL" 格式）</label>
+                    <textarea id="batch-urls" rows="8" class="batch-textarea" placeholder="央视,#genre#
+CCTV1,http://tvgslb.hn.chinamobile.com:8089/180000001002/00000001000000000007000000001243/main.m3u8
+卫视,#genre#
+湖南卫视,http://tvgslb.hn.chinamobile.com:8089/180000001002/00000001000000000010000000040382/main.m3u8
+
+# 也支持纯URL格式（没有频道名）
+http://tvgslb.hn.chinamobile.com:8089/180000001002/00000001000000000002000000113182/main.m3u8
+http://tvgslb.hn.chinamobile.com:8089/180000001002/00000001000000000007000000001249/main.m3u8"></textarea>
                     <p style="margin-top: 6px; font-size: 0.85rem; color: #94a3b8;">
-                        支持M3U8格式。系统将测试每个URL的状态码，并对状态码200的M3U8文件进行内容验证。
+                        支持txt直播源列表格式。系统将测试每个URL的状态码，并对状态码200的M3U8文件进行内容验证。
                     </p>
+                </div>
+                
+                <div class="batch-controls">
+                    <label class="btn btn-clear">
+                        <i class="fas fa-folder-open"></i> <span>导入TXT列表</span>
+                        <input type="file" id="import-txt-file" accept=".txt,text/plain" style="display: none;">
+                    </label>
+                    
+                    <button id="load-example-urls" class="btn btn-clear">
+                        <i class="fas fa-file-import"></i> <span>加载示例</span>
+                    </button>
+                    
+                    <button id="clear-urls" class="btn btn-clear">
+                        <i class="fas fa-trash-alt"></i> <span>清空</span>
+                    </button>
+                    
+                    <div id="url-count">频道: 0</div>
                 </div>
                 
                 <div class="form-group">
@@ -85,21 +100,9 @@ http://playertest.longtailvideo.com/adaptive/bipbop/gear4/prog_index.m3u8"></tex
                             </select>
                         </div>
                     </div>
-                    <p style="margin-top: 6px; font-size: 0.85rem; color: #94a3b8;">
-                        从下拉选择预置User-Agent或手动输入。若留空，后端使用默认UA。
-                    </p>
                 </div>
                 
-                <div class="batch-controls">
-                    <button id="load-example-urls" class="btn btn-clear" style="padding: 10px 15px;">
-                        <i class="fas fa-file-import"></i> 加载示例URL
-                    </button>
-                    <button id="clear-urls" class="btn btn-clear" style="padding: 10px 15px;">
-                        <i class="fas fa-trash-alt"></i> 清空URL
-                    </button>
-                    <div style="flex-grow: 1;"></div>
-                    <div id="url-count" style="color: #94a3b8; font-size: 0.9rem;">URL数量: 0</div>
-                </div>
+
             </div>
             
             <div class="card">
@@ -133,29 +136,23 @@ http://playertest.longtailvideo.com/adaptive/bipbop/gear4/prog_index.m3u8"></tex
                 </div>
             </div>
             
-<!-- 在测试日志卡片中添加历史日志选择器 -->
-<!-- 在测试日志卡片中添加历史日志选择器 -->
-<div class="card" id="test-log-card" style="display: none;">
-    <h2 class="card-title"><i class="fas fa-clipboard-list"></i> 测试日志（实时）
-        <div style="display: inline-block; margin-left: 10px; font-size: 0.8rem; background: rgba(76, 201, 240, 0.2); padding: 2px 8px; border-radius: 12px;">
-            当前测试
-        </div>
-    </h2>
+            <div class="card" id="test-log-card" style="display: none;">
+    <h2 class="card-title"><i class="fas fa-clipboard-list"></i> 测试日志（实时）</h2>
     
-    <!-- 历史日志选择器 -->
     <div class="form-group" style="margin-bottom: 10px;">
         <label for="historical-logs">查看历史日志</label>
         <div class="input-row">
-            <select id="historical-logs" class="ua-preset" style="flex: 2;">
+            <select id="historical-logs" class="ua-preset">
                 <option value="current">当前测试</option>
-                <!-- 历史日志选项会通过JS动态添加 -->
             </select>
-            <button id="load-historical-log" class="btn btn-clear" style="flex: 1; padding: 10px 12px; margin-left: 8px;">
-                <i class="fas fa-history"></i> 加载日志
-            </button>
-            <button id="clear-historical-logs" class="btn btn-clear" style="flex: 1; padding: 10px 12px; margin-left: 8px;">
-                <i class="fas fa-trash-alt"></i> 清空历史
-            </button>
+            <div class="button-container">
+                <button id="load-historical-log" class="btn btn-clear">
+                    <i class="fas fa-history"></i> <span>加载日志</span>
+                </button>
+                <button id="clear-historical-logs" class="btn btn-clear">
+                    <i class="fas fa-trash-alt"></i> <span>清空历史</span>
+                </button>
+            </div>
         </div>
     </div>
     
@@ -166,14 +163,14 @@ http://playertest.longtailvideo.com/adaptive/bipbop/gear4/prog_index.m3u8"></tex
         </div>
     </div>
     <div class="log-actions">
-        <button id="export-log-btn" class="btn btn-clear mobile-btn">
-            <i class="fas fa-download"></i> 导出日志
+        <button id="export-log-btn" class="btn btn-clear">
+            <i class="fas fa-download"></i> <span>导出日志</span>
         </button>
-        <button id="clear-log-btn" class="btn btn-clear mobile-btn">
-            <i class="fas fa-trash-alt"></i> 清除日志
+        <button id="clear-log-btn" class="btn btn-clear">
+            <i class="fas fa-trash-alt"></i> <span>清除日志</span>
         </button>
-        <button id="show-realtime-log" class="btn btn-clear mobile-btn">
-            <i class="fas fa-play-circle"></i> 返回实时
+        <button id="show-realtime-log" class="btn btn-clear">
+            <i class="fas fa-play-circle"></i> <span>返回实时</span>
         </button>
     </div>
 </div>
@@ -181,16 +178,15 @@ http://playertest.longtailvideo.com/adaptive/bipbop/gear4/prog_index.m3u8"></tex
             <div class="card">
                 <h2 class="card-title"><i class="fas fa-history"></i> 测试记录</h2>
                 <div class="test-records-container">
-                    <p style="margin-bottom: 15px; color: #b0b0d0; font-size: 0.95rem;">
+                    <p style="margin-bottom: 15px; color: #b0b0d0; font-size: 0.8rem;">
                         自动保存最近的测试记录，点击记录可快速填充配置。
                     </p>
                     
                     <div class="records-controls">
-                        <button id="clear-records-btn" class="btn btn-clear" style="padding: 10px 15px;">
-                            <i class="fas fa-trash-alt"></i> 清除所有记录
+                        <button id="clear-records-btn" class="btn btn-clear">
+                            <i class="fas fa-trash-alt"></i> <span>清除记录</span>
                         </button>
-                        <div style="flex-grow: 1;"></div>
-                        <div id="records-count" style="color: #94a3b8; font-size: 0.9rem;">记录: 0/20</div>
+                        <div id="records-count">记录: 0/20</div>
                     </div>
                     
                     <div class="records-list" id="records-list">
@@ -208,7 +204,7 @@ http://playertest.longtailvideo.com/adaptive/bipbop/gear4/prog_index.m3u8"></tex
                 <div class="batch-stats">
                     <div class="stat-item">
                         <div id="total-urls-stat" class="stat-value">0</div>
-                        <div class="stat-label">总URL数</div>
+                        <div class="stat-label">总频道数</div>
                     </div>
                     <div class="stat-item">
                         <div id="completed-urls-stat" class="stat-value">0</div>
@@ -239,19 +235,19 @@ http://playertest.longtailvideo.com/adaptive/bipbop/gear4/prog_index.m3u8"></tex
                     <table id="batch-result-table" class="batch-result-table">
                         <thead>
                             <tr>
-                                 <th width="40">#</th>
-            <th>URL</th> <!-- 移除固定宽度，使用弹性布局 -->
-            <th width="80">状态码</th>
-            <th width="100">响应时间</th>
-            <th width="80">M3U8</th>
-            <th width="80">有效性</th>
-            <th width="120">详细信息</th> <!-- 限制详细信息列宽 -->
+                                <th width="40">#</th>
+                                <th>频道名称</th>
+                                <th width="80">状态码</th>
+                                <th width="100">响应时间</th>
+                                <th width="80">M3U8</th>
+                                <th width="80">有效性</th>
+                                <th width="120">详细信息</th>
                             </tr>
                         </thead>
                         <tbody id="batch-result-body">
                             <tr>
                                 <td colspan="7" style="text-align: center; padding: 20px; color: #94a3b8;">
-                                    尚未开始测试，请配置URL并点击"开始测试"按钮
+                                    尚未开始测试，请配置频道并点击"开始测试"按钮
                                 </td>
                             </tr>
                         </tbody>
@@ -259,11 +255,11 @@ http://playertest.longtailvideo.com/adaptive/bipbop/gear4/prog_index.m3u8"></tex
                 </div>
                 
                 <div class="batch-actions" style="margin-top: 15px;">
-                    <button id="export-results-btn" class="btn btn-export-results" style="padding: 10px 20px;">
-                        <i class="fas fa-download"></i> 导出测试结果
+                    <button id="export-valid-report-btn" class="btn btn-batch">
+                        <i class="fas fa-file-alt"></i> <span>导出测试报告</span>
                     </button>
-                    <button id="clear-results-btn" class="btn btn-clear" style="padding: 10px 20px;">
-                        <i class="fas fa-trash-alt"></i> 清除结果
+                    <button id="clear-results-btn" class="btn btn-clear">
+                        <i class="fas fa-trash-alt"></i> <span>清除结果</span>
                     </button>
                 </div>
             </div>
@@ -271,7 +267,15 @@ http://playertest.longtailvideo.com/adaptive/bipbop/gear4/prog_index.m3u8"></tex
             <div class="card">
                 <h2 class="card-title"><i class="fas fa-info-circle"></i> 使用说明</h2>
                 <div style="padding: 8px 0;">
-                    <h3 style="color: #4cc9f0; margin-bottom: 8px; font-size: 1.1rem;">M3U8有效性验证：</h3>
+                    <h3 style="color: #4cc9f0; margin-bottom: 8px; font-size: 1.1rem;">新增功能：</h3>
+                    <ul style="padding-left: 18px; margin-bottom: 15px; font-size: 0.95rem;">
+                        <li>支持直接粘贴或导入带频道名的源列表（格式：频道名,URL）</li>
+                        <li>支持 #genre# 分组，测试报告会保留完整分组结构</li>
+                        <li>点击"导入TXT文件"可直接加载本地源文件</li>
+                        <li>测试完成后可点击"导出测试报告"生成标准TXT报告（有效/超时/无效三类）</li>
+                    </ul>
+                    
+                                        <h3 style="color: #4cc9f0; margin-bottom: 8px; font-size: 1.1rem;">M3U8有效性验证：</h3>
                     <ul style="padding-left: 18px; margin-bottom: 15px; font-size: 0.95rem;">
                         <li>检查文件头部是否为 #EXTM3U</li>
                         <li>检查是否包含至少一个 #EXTINF 标签</li>
@@ -300,24 +304,22 @@ http://playertest.longtailvideo.com/adaptive/bipbop/gear4/prog_index.m3u8"></tex
 
                     <h3 style="color: #4cc9f0; margin-bottom: 8px; font-size: 1.1rem;">注意事项：</h3>
                     <ul style="padding-left: 18px; font-size: 0.95rem;">
-                        <li>如果遇到"Empty reply from server"错误，请勾选"强制使用IPv4"选项</li>
                         <li>只测试状态码为200的URL，其他状态码视为失败</li>
                         <li>对于非M3U8文件或无效M3U8，系统会标记为无效</li>
                         <li>测试速度取决于代理服务器网络状况和URL数量</li>
                         <li>测试记录保存在浏览器本地，清除浏览器数据会丢失记录</li>
                         <li>测试过程中，实时日志会显示在"开始测试"按钮下方</li>
                     </ul>
+                    
                 </div>
             </div>
         </main>
         
         <footer>
-            <p>SOCKS5代理直播源测试工具 &copy; 2023 | 支持测试、M3U8验证和自动测试记录</p>
+            <p>SOCKS5代理直播源测试工具 &copy; 2025 | 支持频道名、分组、TXT导入及测试报告导出</p>
             <p style="margin-top: 5px; font-size: 0.8rem;">需要PHP 7.0+ 和 cURL、sockets扩展支持</p>
         </footer>
     </div>
-    
-    <!-- 移除加载遮罩层 -->
     
     <script src="script.js"></script>
 </body>

@@ -23,7 +23,7 @@ body {
     color: var(--text-primary);
     line-height: 1.6;
     -webkit-tap-highlight-color: transparent;
-    overflow-x: hidden; /* 防止水平滚动 */
+    overflow-x: hidden;
 }
 
 .container {
@@ -56,20 +56,18 @@ h1 {
     gap: 15px;
     margin-bottom: 15px;
     width: 100%;
-    flex-wrap: nowrap; /* 防止换行 */
+    flex-wrap: nowrap;
 }
 
-/* 左侧配置面板 */
 .panel:first-child {
-    flex: 1 1 45%; /* 左侧配置面板宽度 */
-    min-width: 350px; /* 最小宽度 */
-    max-width: 600px; /* 最大宽度 */
+    flex: 1 1 45%;
+    min-width: 350px;
+    max-width: 600px;
 }
 
-/* 右侧结果面板 */
 .panel:nth-child(2) {
-    flex: 1 1 55%; /* 右侧结果面板宽度 */
-    min-width: 400px; /* 最小宽度 */
+    flex: 1 1 55%;
+    min-width: 400px;
 }
 
 .panel {
@@ -79,7 +77,7 @@ h1 {
     box-shadow: var(--shadow);
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* 防止内容溢出 */
+    overflow: hidden;
 }
 
 .panel-title {
@@ -101,7 +99,6 @@ h1 {
     font-weight: 600;
 }
 
-/* 表单元素 */
 .form-group {
     margin-bottom: 15px;
 }
@@ -123,7 +120,6 @@ h1 {
     flex: 1;
 }
 
-/* 统一样式，包括密码输入框 */
 input[type="text"],
 input[type="number"],
 input[type="password"],
@@ -137,7 +133,7 @@ select {
     color: var(--text-primary);
     background-color: #f9f9f9;
     transition: border-color 0.2s, box-shadow 0.2s;
-    font-family: inherit; /* 确保使用相同的字体 */
+    font-family: inherit;
 }
 
 input:focus,
@@ -149,10 +145,9 @@ select:focus {
     background-color: var(--card-bg);
 }
 
-/* 特别处理密码输入框的字体，确保显示一致 */
 input[type="password"] {
-    -webkit-text-security: disc; /* 确保密码显示为圆点 */
-    letter-spacing: 1px; /* 稍微增加字母间距，让圆点更清晰 */
+    -webkit-text-security: disc;
+    letter-spacing: 1px;
 }
 
 textarea {
@@ -177,14 +172,13 @@ textarea {
     border-radius: 0 6px 6px 0;
 }
 
-/* 密码输入框组样式 */
 .password-input-group {
     position: relative;
     display: flex;
 }
 
 .password-input-group input {
-    padding-right: 40px; /* 为按钮留出空间 */
+    padding-right: 40px;
     flex: 1;
 }
 
@@ -210,11 +204,6 @@ textarea {
     background: rgba(33, 150, 243, 0.05);
 }
 
-.toggle-password-btn:active {
-    background: rgba(33, 150, 243, 0.1);
-}
-
-/* 按钮 */
 .buttons {
     display: flex;
     gap: 10px;
@@ -244,11 +233,6 @@ textarea {
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
 }
 
-.btn:active {
-    transform: translateY(0);
-    box-shadow: none;
-}
-
 .btn:first-child {
     background-color: var(--primary-color);
 }
@@ -273,7 +257,6 @@ textarea {
     background-color: #43a047;
 }
 
-/* 响应结果区域 */
 .response-info {
     display: flex;
     justify-content: space-between;
@@ -299,7 +282,7 @@ textarea {
 
 .response-info-value {
     font-weight: 500;
-    color: var(--text-primary);
+    color: var(--secondary-color);
 }
 
 .status-badge {
@@ -327,11 +310,18 @@ textarea {
     background-color: var(--primary-color);
 }
 
-/* 标签页 */
+.status-504 {
+    background-color: var(--error-color) !important;
+}
+
+.status-proxy-error {
+    background-color: var(--warning-color);
+}
+
 .tabs {
     display: flex;
     border-bottom: 2px solid var(--border-color);
-    margin-bottom: 0; 
+    margin-bottom: 0;
 }
 
 .tab {
@@ -343,7 +333,7 @@ textarea {
     transition: all 0.2s;
     display: flex;
     align-items: center;
-    white-space: nowrap; /* 防止标签换行 */
+    white-space: nowrap;
 }
 
 .tab i {
@@ -367,7 +357,7 @@ textarea {
     border: 1px solid var(--border-color);
     border-top: none;
     border-radius: 0 0 6px 6px;
-    padding: 15px; 
+    padding: 15px;
     width: 100%;
 }
 
@@ -380,11 +370,11 @@ textarea {
     width: 100%;
 }
 
-/* ================ 关键修复：响应体长文本换行 ================ */
+/* 修改响应体样式 */
 #response-body {
-    white-space: pre-wrap; /* 保留空白符，但允许换行 */
-    word-break: break-all; /* 长单词或URL强制换行 */
-    word-wrap: break-word; /* 兼容性更好的长单词换行 */
+    white-space: pre-wrap;     /* 保持其他内容的换行 */
+    word-break: break-all;     /* 允许URL在任何字符处换行 */
+    word-wrap: break-word;     /* 长单词换行 */
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 13px;
     line-height: 1.4;
@@ -392,14 +382,14 @@ textarea {
     padding: 12px;
     border-radius: 4px;
     border: 1px solid #eee;
-    max-height: 400px;
+    max-height: 1000px;
     overflow-y: auto;
+    overflow-x: hidden;        /* 隐藏横向滚动条 */
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
 }
 
-/* M3U8内容特殊处理 */
 #response-body.m3u8-content {
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 13px;
@@ -411,33 +401,31 @@ textarea {
     padding: 12px;
     border-radius: 4px;
     border: 1px solid #e9ecef;
-    max-height: 400px;
+    max-height: 1200px;
     overflow-y: auto;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
 }
 
-/* Headers Table */
 .headers-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 13px;
-    table-layout: fixed; /* 关键：启用固定布局 */
+    table-layout: fixed;
 }
 
 .headers-table th, .headers-table td {
     padding: 8px 12px;
     text-align: left;
-    border-bottom: 1px solid #f0f0f0;
-    word-break: break-all; /* 表格内长文本换行 */
+    border-bottom: 1px solid #d9ebe0;
+    word-break: break-all;
 }
 
-/* 设置列宽 */
 .headers-table th:first-child,
 .headers-table td:first-child {
     width: 25%;
-    min-width: 120px; /* 确保左侧列不会被压得太窄 */
+    min-width: 120px;
 }
 
 .headers-table th:last-child,
@@ -446,7 +434,7 @@ textarea {
 }
 
 .headers-table th {
-    background-color: #f5f5f5;
+    background-color: #ecf7f0;
     font-weight: 600;
     color: var(--primary-color);
 }
@@ -455,7 +443,6 @@ textarea {
     border-bottom: none;
 }
 
-/* Loading Spinner */
 .loading {
     display: none;
     flex-direction: column;
@@ -494,11 +481,6 @@ textarea {
     margin-top: 5px;
 }
 
-.info-message i {
-    margin-right: 5px;
-}
-
-/* 可折叠面板 (请求头/代理/重定向) */
 .compact-group {
     margin-bottom: 15px;
     border: 1px solid var(--border-color);
@@ -535,20 +517,15 @@ textarea {
 }
 
 .compact-group-content.expanded {
-    max-height: 500px; /* 足够大的值 */
+    max-height: 500px;
     padding: 15px;
 }
 
-.compact-group-content .form-group:last-child {
-    margin-bottom: 0;
-}
-
-/* 重定向链条展示 - 修复长URL换行 */
 .redirect-step {
     border-left: 2px solid #ff9800;
     padding-left: 15px;
-    background-color: #f7f6f1; 
-        color: #000000;
+    background-color: #f7f6f1;
+    color: #000000;
     border-radius: 8px;
     padding: 6px;
     margin-bottom: 15px;
@@ -568,25 +545,23 @@ textarea {
     border: 2px solid var(--card-bg);
 }
 
-/* 【新增样式】圆形序号徽章 */
 .redirect-seq-badge {
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    width: 24px; 
-    height: 24px; 
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     font-size: 13px;
     font-weight: 700;
     margin-right: 10px;
-    color: #ffffff; 
+    color: #ffffff;
     flex-shrink: 0;
 }
 
-/* 【新增样式】最终响应高亮 */
 .redirect-step.final-response-step {
-    border-left: 2px solid var(--primary-color); 
-    background-color: #e3f2fd; 
+    border-left: 2px solid var(--primary-color);
+    background-color: #e3f2fd;
     padding: 12px;
     border-radius: 8px;
     margin-top: 10px;
@@ -623,23 +598,25 @@ textarea {
     color: var(--secondary-color);
     font-weight: 700;
 }
-/* 【修改样式】重定向步骤的URL为蓝色，添加换行支持 */
-.redirect-step-url {
-    font-size: 0.9em;
-    
-    word-break: break-all; /* 关键：长URL换行 */
+
+/* 最终URL容器样式 */
+#final-url-container .redirect-step-url {
+    font-size: 0.85em;
+    word-break: break-all;
+    white-space: normal;
     word-wrap: break-word;
-    font-family: monospace;
-    
-    width: 100%;
-    max-width: 100%;
-    overflow-wrap: break-word;
+    line-height: 1.3;
 }
 
-.redirect-step-status { /* 此样式现在只用于辅助，主要由 .redirect-seq-badge 实现圆形 */
-    font-weight: 700;
-    margin-right: 10px;
-    display: none; /* 隐藏旧的数字样式，使用新的徽章 */
+/* 修改重定向URL样式 - 允许自动换行但不强制每个参数换行 */
+.redirect-step-url {
+    font-size: 0.9em;
+    word-break: break-all;     /* 允许在任何字符处换行 */
+    white-space: normal;       /* 正常换行 */
+    word-wrap: break-word;     /* 长单词换行 */
+    font-family: monospace;
+    width: 100%;
+    max-width: 100%;
 }
 
 .no-redirects {
@@ -648,9 +625,8 @@ textarea {
     color: var(--text-secondary);
 }
 
-/* 请求历史 */
 .request-history {
-    order: 3; 
+    order: 3;
     padding: 20px;
     width: 100%;
 }
@@ -666,7 +642,7 @@ textarea {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 15px;
+    padding: 6px 15px;
     background-color: #f9f9f9;
     border-radius: 6px;
     border: 1px solid var(--border-color);
@@ -688,15 +664,22 @@ textarea {
     background-color: #f9f9f9;
 }
 
+/* 历史记录URL样式 */
 .history-url {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 400;
     color: var(--primary-color);
-    flex: 1;
+    margin-bottom: 3px;
+    word-break: break-all;     /* 允许在任何字符处换行 */
+    white-space: normal;       /* 正常换行 */
+    overflow-wrap: break-word; /* 长词换行 */
+    line-height: 1.2;
+    max-height: 2.4em;         /* 限制最大高度，显示2行 */
     overflow: hidden;
-    white-space: nowrap;
     text-overflow: ellipsis;
-    margin-right: 15px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;     /* 最多显示2行 */
+    -webkit-box-orient: vertical;
 }
 
 .history-meta {
@@ -712,7 +695,6 @@ textarea {
     font-weight: 600;
 }
 
-/* 历史记录相关样式 */
 .history-clear-all {
     text-align: center;
     padding: 8px;
@@ -735,19 +717,10 @@ textarea {
     margin-right: 5px;
 }
 
-/* 配置回填高亮效果 */
-input:focus, textarea:focus, select:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
-    outline: none;
-    background-color: var(--card-bg);
-}
-
-/* 操作日志 */
 .log-panel {
     order: 4;
     width: 100%;
-     margin-top: 15px; /* 添加这个 */
+    margin-top: 15px;
 }
 
 #log-container {
@@ -795,7 +768,6 @@ input:focus, textarea:focus, select:focus {
     width: 100%;
 }
 
-/* 统计数字徽章样式 */
 .stat-badge {
     display: inline-flex;
     justify-content: center;
@@ -813,26 +785,18 @@ input:focus, textarea:focus, select:focus {
     transition: background-color 0.2s;
 }
 
-/* Tab中的徽章样式覆盖 */
 .tab .stat-badge {
     margin-left: 5px;
 }
 
-/* 为特定的徽章设置颜色 */
-#redirect-count-badge { 
-    background-color: var(--warning-color); 
+#redirect-count-badge {
+    background-color: var(--warning-color);
 }
 
 #headers-badge {
-    background-color: var(--secondary-color); 
+    background-color: var(--secondary-color);
 }
 
-/* 响应信息项的对齐修正 */
-.response-info-item:last-child {
-    align-items: center;
-}
-
-/* 下载按钮样式 */
 .download-btn {
     background-color: var(--secondary-color) !important;
     color: white !important;
@@ -848,7 +812,6 @@ input:focus, textarea:focus, select:focus {
     background-color: #3d8b40 !important;
 }
 
-/* 下载提示样式 */
 .download-tip {
     background-color: #e8f5e9 !important;
     border-color: #c8e6c9 !important;
@@ -864,13 +827,6 @@ input:focus, textarea:focus, select:focus {
     margin-right: 8px !important;
 }
 
-.download-tip small {
-    display: block !important;
-    margin-top: 5px !important;
-    opacity: 0.8 !important;
-}
-
-/* 下载区域样式 */
 .download-section {
     margin-top: 15px;
     padding: 15px;
@@ -887,7 +843,6 @@ input:focus, textarea:focus, select:focus {
     font-size: 0.9rem !important;
 }
 
-/* M3U8操作按钮区域样式 */
 .m3u8-actions {
     background-color: #f8f9fa !important;
     border-color: #e9ecef !important;
@@ -903,23 +858,28 @@ input:focus, textarea:focus, select:focus {
     margin-bottom: 5px !important;
 }
 
-/* ================ 响应式设计 ================ */
-/* 大屏幕 - 保持两列布局 */
+/* 504状态码样式 */
+.redirect-step[data-status-code="504"] .redirect-seq-badge,
+.redirect-step .redirect-seq-badge.status-504 {
+    background-color: var(--error-color) !important;
+}
+
+.redirect-step[data-status-code="504"] .status-badge,
+.redirect-step .status-badge.status-504 {
+    background-color: var(--error-color) !important;
+}
+
+.history-item .status-badge.history-status.status-504 {
+    background-color: var(--error-color) !important;
+}
+
+/* 响应式设计 */
 @media (min-width: 1024px) {
     .main-content {
         flex-wrap: nowrap;
     }
-    
-    .panel:first-child {
-        flex: 1 1 45%;
-    }
-    
-    .panel:nth-child(2) {
-        flex: 1 1 55%;
-    }
 }
 
-/* 中等屏幕 - 调整布局比例 */
 @media (max-width: 1200px) and (min-width: 768px) {
     .container {
         max-width: 100%;
@@ -937,7 +897,6 @@ input:focus, textarea:focus, select:focus {
     }
 }
 
-/* 平板和移动设备 */
 @media (max-width: 767px) {
     .container {
         padding: 10px;
@@ -961,39 +920,39 @@ input:focus, textarea:focus, select:focus {
         gap: 0;
     }
     
-    .buttons { 
-        flex-direction: column; 
+    .buttons {
+        flex-direction: column;
     }
     
-    .btn { 
-        width: 100%; 
-        padding: 12px; 
+    .btn {
+        width: 100%;
+        padding: 12px;
         margin-bottom: 5px;
     }
     
-    .tabs { 
-        flex-wrap: wrap; 
+    .tabs {
+        flex-wrap: wrap;
         overflow-x: auto;
     }
     
-    .tab { 
-        padding: 8px 10px; 
-        font-size: 12px; 
+    .tab {
+        padding: 8px 10px;
+        font-size: 12px;
         flex: 1;
         min-width: 80px;
     }
     
-    .tab-content { 
-        max-height: 300px; 
+    .tab-content {
+        max-height: 300px;
     }
     
-    .history-meta { 
-        flex-direction: column; 
-        gap: 5px; 
+    .history-meta {
+        flex-direction: column;
+        gap: 5px;
     }
     
-    #log-container { 
-        max-height: 200px; 
+    #log-container {
+        max-height: 200px;
     }
     
     .response-info {
@@ -1003,23 +962,22 @@ input:focus, textarea:focus, select:focus {
     }
 }
 
-/* 小屏幕手机 */
 @media (max-width: 480px) {
-    h1 { 
-        font-size: 1.3rem; 
+    h1 {
+        font-size: 1.3rem;
     }
     
-    .subtitle { 
-        font-size: 0.8rem; 
+    .subtitle {
+        font-size: 0.8rem;
     }
     
-    .panel-title { 
-        font-size: 0.95rem; 
+    .panel-title {
+        font-size: 0.95rem;
     }
     
-    input, textarea, select { 
-        padding: 8px 10px; 
-        font-size: 13px; 
+    input, textarea, select {
+        padding: 8px 10px;
+        font-size: 13px;
     }
     
     .panel {
@@ -1038,14 +996,13 @@ input:focus, textarea:focus, select:focus {
     }
 }
 
-/* 触控优化 */
 @media (hover: none) and (pointer: coarse) {
     .btn, .tab, .history-item, .compact-group-title {
         min-height: 44px;
     }
     
     input, select, textarea {
-        font-size: 16px; /* 防止iOS自动缩放 */
+        font-size: 16px;
     }
     
     .compact-group-title {
@@ -1059,7 +1016,6 @@ input:focus, textarea:focus, select:focus {
     }
 }
 
-/* 暗色模式 */
 @media (prefers-color-scheme: dark) {
     :root {
         --bg-color: #222222;
@@ -1132,7 +1088,7 @@ input:focus, textarea:focus, select:focus {
     }
     
     .redirect-step.final-response-step {
-        background-color: #1a4f8a; 
+        background-color: #1a4f8a;
         border-left-color: var(--primary-color);
     }
 
@@ -1153,7 +1109,6 @@ input:focus, textarea:focus, select:focus {
         background-color: #383838;
     }
     
-    /* 圆形序号在暗色模式下也保持白色字体和蓝色背景 */
     .redirect-seq-badge {
         background-color: var(--primary-color);
         color: #ffffff;
@@ -1169,7 +1124,6 @@ input:focus, textarea:focus, select:focus {
         border-color: #ff6b6b;
     }
 
-    /* 密码输入框组样式适配暗色模式 */
     .toggle-password-btn {
         color: var(--text-secondary);
     }
@@ -1220,48 +1174,6 @@ input:focus, textarea:focus, select:focus {
     }
 }
 
-/* 防止文本选择时的背景色 */
-::selection {
-    background-color: rgba(33, 150, 243, 0.3);
-    color: inherit;
-}
-
-/* 滚动条样式 */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-}
-
-/* 暗色模式滚动条 */
-@media (prefers-color-scheme: dark) {
-    ::-webkit-scrollbar-track {
-        background: #333;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: #555;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: #666;
-    }
-}
-
-/* 历史记录容器样式 */
 .history-container {
     max-height: 400px;
     overflow-y: auto;
@@ -1269,19 +1181,18 @@ input:focus, textarea:focus, select:focus {
     margin-bottom: 10px;
 }
 
-/* 历史记录项样式 */
 .history-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 15px;
+    padding: 6px 15px;
     background-color: #f9f9f9;
     border-radius: 6px;
     border: 1px solid var(--border-color);
     cursor: pointer;
     transition: all 0.2s;
     user-select: none;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     position: relative;
 }
 
@@ -1304,12 +1215,10 @@ input:focus, textarea:focus, select:focus {
     box-shadow: none;
 }
 
-/* 隐藏的历史记录项 */
 .history-item.history-hidden {
     display: none;
 }
 
-/* 历史记录信息区域 */
 .history-info {
     flex: 1;
     overflow: hidden;
@@ -1345,7 +1254,6 @@ input:focus, textarea:focus, select:focus {
     font-size: 0.7rem;
 }
 
-/* 历史记录操作按钮 */
 .history-actions {
     display: flex;
     gap: 5px;
@@ -1392,11 +1300,10 @@ input:focus, textarea:focus, select:focus {
     color: white;
 }
 
-/* 历史记录切换按钮 */
 .history-toggle-btn {
     text-align: center;
     padding: 6px;
-    margin: 8px 0;
+    margin: 4px 0;
     background: var(--bg-color);
     border-radius: 6px;
     cursor: pointer;
@@ -1424,7 +1331,6 @@ input:focus, textarea:focus, select:focus {
     transform: rotate(180deg);
 }
 
-/* 清除所有历史按钮 */
 .history-clear-all {
     text-align: center;
     padding: 9px;
@@ -1449,7 +1355,6 @@ input:focus, textarea:focus, select:focus {
     margin-right: 8px;
 }
 
-/* 历史记录滚动条样式 */
 .history-container::-webkit-scrollbar {
     width: 6px;
 }
@@ -1468,7 +1373,6 @@ input:focus, textarea:focus, select:focus {
     background: #a8a8a8;
 }
 
-/* 暗色模式适配 */
 @media (prefers-color-scheme: dark) {
     .history-item {
         background-color: #383838;
@@ -1539,7 +1443,6 @@ input:focus, textarea:focus, select:focus {
     }
 }
 
-/* 响应式调整 */
 @media (max-width: 768px) {
     .history-container {
         max-height: 300px;
@@ -1550,7 +1453,7 @@ input:focus, textarea:focus, select:focus {
     }
     
     .history-actions {
-        opacity: 1; /* 移动端始终显示操作按钮 */
+        opacity: 1;
     }
 }
 
@@ -1573,10 +1476,64 @@ input:focus, textarea:focus, select:focus {
         gap: 5px;
         justify-content: space-between;
     }
+}
+
+::selection {
+    background-color: rgba(33, 150, 243, 0.3);
+    color: inherit;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+@media (prefers-color-scheme: dark) {
+    ::-webkit-scrollbar-track {
+        background: #333;
+    }
     
-    .history-details span {
-        flex: 1;
-        text-align: center;
-        padding: 2px 0;
+    ::-webkit-scrollbar-thumb {
+        background: #555;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #666;
+    }
+}
+
+
+/* 修改错误信息URL样式 */
+.error-url {
+    word-break: break-all;     /* 允许在任何字符处换行 */
+    white-space: normal;       /* 正常换行 */
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.85em;
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 8px;
+    border-radius: 4px;
+    margin: 5px 0;
+    border-left: 2px solid var(--warning-color);
+}
+
+/* 暗色模式适配 */
+@media (prefers-color-scheme: dark) {
+    .error-url {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-left-color: var(--warning-color);
     }
 }
