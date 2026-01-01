@@ -6,10 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let channelEntries = []; // {name, url, group}
     let testRecords = [];
     let currentTestLogs = [];
-    let historicalLogs = [];
     const MAX_RECORDS = 20;
-    const MAX_HISTORICAL_LOGS = 10;
-    let isViewingHistoricalLog = false;
 
     // ==================== DOM元素 ====================
     const batchUrlsTextarea = document.getElementById('batch-urls');
@@ -23,16 +20,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearResultsBtn = document.getElementById('clear-results-btn');
     const clearLogBtn = document.getElementById('clear-log-btn');
     const exportLogBtn = document.getElementById('export-log-btn');
-    const showRealtimeLogBtn = document.getElementById('show-realtime-log');
     const batchResultBody = document.getElementById('batch-result-body');
     const logBox = document.getElementById('log-box');
     const testLogCard = document.getElementById('test-log-card');
     const clearRecordsBtn = document.getElementById('clear-records-btn');
     const recordsList = document.getElementById('records-list');
     const recordsCount = document.getElementById('records-count');
-    const historicalLogsSelect = document.getElementById('historical-logs');
-    const loadHistoricalLogBtn = document.getElementById('load-historical-log');
-    const clearHistoricalLogsBtn = document.getElementById('clear-historical-logs');
 
     const totalUrlsStat = document.getElementById('total-urls-stat');
     const completedUrlsStat = document.getElementById('completed-urls-stat');
@@ -49,11 +42,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const uaPresetSelect = document.getElementById('ua-preset');
 
     // ==================== 辅助函数 ====================
-function getShortUrl(url, maxLength = 180) {
-    if (!url || url.length <= maxLength) return url;
-    // 只在结尾处省略，保留前面完整的URL
-    return url.substring(0, maxLength - 3) + '...';
-}
+    function getShortUrl(url, maxLength = 180) {
+        if (!url || url.length <= maxLength) return url;
+        // 只在结尾处省略，保留前面完整的URL
+        return url.substring(0, maxLength - 3) + '...';
+    }
 
     function extractNameFromURL(url) {
         try {
@@ -83,7 +76,6 @@ function getShortUrl(url, maxLength = 180) {
         if (exportResultsBtn) exportResultsBtn.style.display = 'none';
         
         initTestRecords();
-        initHistoricalLogs();
         bindEvents();
         
         if (batchUrlsTextarea && batchUrlsTextarea.value) {
@@ -92,6 +84,7 @@ function getShortUrl(url, maxLength = 180) {
         
         addLog('SOCKS5直播源测试工具已加载完成', 'success');
         addLog('支持功能：频道名+URL格式、纯URL格式、分组、TXT导入、测试报告导出、测试记录', 'info');
+        addLog('提示：代理配置为可选，不填写时使用直连测试', 'info');
     }
 
     function initTestRecords() {
@@ -105,30 +98,6 @@ function getShortUrl(url, maxLength = 180) {
             testRecords = [];
         }
         updateRecordsDisplay();
-    }
-
-    function initHistoricalLogs() {
-        try {
-            const saved = localStorage.getItem('historicalLogs');
-            if (saved) {
-                historicalLogs = JSON.parse(saved).slice(0, MAX_HISTORICAL_LOGS);
-            }
-        } catch (e) {
-            console.error('读取历史日志失败:', e);
-            historicalLogs = [];
-        }
-        updateHistoricalLogsDropdown();
-    }
-
-    function updateHistoricalLogsDropdown() {
-        if (!historicalLogsSelect) return;
-        historicalLogsSelect.innerHTML = '<option value="current">当前测试</option>';
-        historicalLogs.slice().reverse().forEach((log, i) => {
-            const option = document.createElement('option');
-            option.value = historicalLogs.length - 1 - i;
-            option.textContent = log.title || `日志 ${i+1}`;
-            historicalLogsSelect.appendChild(option);
-        });
     }
 
     // ==================== 事件绑定 ====================
@@ -208,49 +177,6 @@ function getShortUrl(url, maxLength = 180) {
             });
         }
 
-        if (loadHistoricalLogBtn) {
-            loadHistoricalLogBtn.addEventListener('click', function() {
-                const selectedIndex = historicalLogsSelect.value;
-                if (selectedIndex === 'current') {
-                    isViewingHistoricalLog = false;
-                    showRealtimeLog();
-                    return;
-                }
-                
-                const index = parseInt(selectedIndex);
-                if (isNaN(index) || index < 0 || index >= historicalLogs.length) {
-                    addLog('无效的历史日志索引', 'error');
-                    return;
-                }
-                
-                loadHistoricalLog(index);
-            });
-        }
-
-        if (showRealtimeLogBtn) {
-            showRealtimeLogBtn.addEventListener('click', showRealtimeLog);
-        }
-
-        if (clearHistoricalLogsBtn) {
-            clearHistoricalLogsBtn.addEventListener('click', function() {
-                if (historicalLogs.length === 0) {
-                    addLog('没有历史日志可清除', 'info');
-                    return;
-                }
-                
-                if (confirm(`确定要清除所有${historicalLogs.length}条历史日志吗？`)) {
-                    historicalLogs = [];
-                    try {
-                        localStorage.removeItem('historicalLogs');
-                    } catch (e) {
-                        console.error('清除历史日志失败:', e);
-                    }
-                    updateHistoricalLogsDropdown();
-                    addLog('所有历史日志已清除', 'info');
-                }
-            });
-        }
-
         if (clearLogBtn) {
             clearLogBtn.addEventListener('click', function() {
                 if (!logBox || logBox.children.length === 0) {
@@ -260,9 +186,7 @@ function getShortUrl(url, maxLength = 180) {
                 
                 if (confirm('确定要清除所有日志吗？')) {
                     logBox.innerHTML = '';
-                    if (!isViewingHistoricalLog) {
-                        currentTestLogs = [];
-                    }
+                    currentTestLogs = [];
                     addLog('日志已清除', 'info');
                 }
             });
@@ -335,9 +259,9 @@ function getShortUrl(url, maxLength = 180) {
         const timeString = `[${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}]`;
 
         const logEntry = { time: timeString, type, message, details, timestamp: now.getTime() };
-        if (!isViewingHistoricalLog) currentTestLogs.push(logEntry);
+        currentTestLogs.push(logEntry);
 
-        if (isViewingHistoricalLog || !logBox) return;
+        if (!logBox) return;
 
         const div = document.createElement('div');
         div.className = 'log-entry';
@@ -349,50 +273,9 @@ function getShortUrl(url, maxLength = 180) {
         const msgSpan = document.createElement('span');
         msgSpan.className = `log-${type}`;
         
-        // 简化日志显示，URL只在结尾省略
-        let logMessage = '';
-        
-        // 匹配测试进度日志 [1/191] CCTV1综合 - 成功
-        const testMatch = message.match(/\[(\d+)\/(\d+)\]\s*(.*?)\s*-\s*(成功|失败|跳过|网络错误)/);
-        
-        if (testMatch) {
-            const index = parseInt(testMatch[1]) - 1;
-            if (index >= 0 && index < channelEntries.length) {
-                const entry = channelEntries[index];
-                // 显示格式：序号/总数 频道名 - 状态 - URL（只在结尾省略）
-                const displayUrl = getShortUrl(entry.url, 150);
-                logMessage = `[${testMatch[1]}/${testMatch[2]}] ${entry.name} - ${testMatch[4]} → ${displayUrl}`;
-            } else {
-                logMessage = message;
-            }
-        } 
-        // 匹配系统消息
-        else if (message.includes('开始批量测试')) {
-            logMessage = `开始批量测试，共 ${channelEntries.length} 个频道`;
-        }
-        else if (message.includes('代理连通性测试通过')) {
-            const timeMatch = message.match(/\((\d+\.?\d*)ms\)/);
-            const time = timeMatch ? timeMatch[1] : '0';
-            logMessage = `代理连通性测试通过 (${time}ms)`;
-        }
-        else if (message.includes('批量测试完成')) {
-            const successMatch = message.match(/成功:\s*(\d+)/);
-            const validMatch = message.match(/有效M3U8:\s*(\d+)/);
-            const success = successMatch ? successMatch[1] : '0';
-            const valid = validMatch ? validMatch[1] : '0';
-            logMessage = `批量测试完成！成功: ${success} 个，有效M3U8: ${valid} 个`;
-        }
-        else if (message.includes('测试记录已保存')) {
-            const timeMatch = message.match(/\(([^)]+)\)/);
-            const time = timeMatch ? timeMatch[1] : '';
-            logMessage = `测试记录已保存 ${time}`;
-        }
-        else {
-            // 其他消息直接显示
-            logMessage = message;
-        }
-        
-        msgSpan.textContent = logMessage;
+        // 直接显示原始消息，不做特殊处理
+        // 让测试函数构建完整的消息
+        msgSpan.textContent = message;
         msgSpan.title = message; // 悬停显示原始完整消息
 
         div.appendChild(timeSpan);
@@ -454,9 +337,14 @@ function getShortUrl(url, maxLength = 180) {
 
         const urls = channelEntries.map(e => e.url);
 
-        addLog(`开始批量测试，共 ${urls.length} 个频道`, 'info');
+        if (proxyHost) {
+            addLog(`开始批量测试（使用代理: ${proxyHost}:${proxyPort}），共 ${urls.length} 个频道`, 'info');
+        } else {
+            addLog(`开始批量测试（直连模式），共 ${urls.length} 个频道`, 'info');
+        }
 
-        if (testProxyFirst && proxyHost) {
+        // 如果有代理且需要测试代理连通性
+        if (proxyHost && testProxyFirst) {
             addLog('正在测试SOCKS5代理连通性...', 'info');
             try {
                 const proxyTestRes = await fetch('api.php', {
@@ -476,7 +364,7 @@ function getShortUrl(url, maxLength = 180) {
                     resetTestState();
                     return;
                 }
-                addLog(`代理连通性测试通过（${proxyTestRes.response_time}ms）`, 'success');
+                addLog(`代理连通性测试通过 (${proxyTestRes.response_time}ms)`, 'success');
             } catch (e) {
                 addLog(`代理测试异常: ${e.message}`, 'error');
                 resetTestState();
@@ -513,22 +401,29 @@ function getShortUrl(url, maxLength = 180) {
                 batchTestResults.push(res);
                 addResultToTable(res, index);
                 updateStats();
-                addLog(`[${index}/${urls.length}] ${entry.name} - 跳过`, 'warning');
+                
+                // 构建完整的日志消息：序号/总数 频道名 - 状态 (详情) → URL
+                const displayUrl = getShortUrl(entry.url, 120);
+                addLog(`[${index}/${urls.length}] ${entry.name} - 跳过 (非M3U8文件) → ${entry.url}`, 'warning');
                 continue;
             }
 
             const payload = {
                 test_type: 'batch_test_m3u8_via_proxy',
                 urls: url,
-                proxy_host: proxyHost,
-                proxy_port: proxyPort,
                 user_agent: customUA,
                 force_ipv4: forceIPv4
             };
             
-            if (useAuth && proxyUsername) {
-                payload.proxy_username = proxyUsername;
-                payload.proxy_password = proxyPassword;
+            // 只有在有代理时才添加代理参数
+            if (proxyHost) {
+                payload.proxy_host = proxyHost;
+                payload.proxy_port = proxyPort;
+                
+                if (useAuth && proxyUsername) {
+                    payload.proxy_username = proxyUsername;
+                    payload.proxy_password = proxyPassword;
+                }
             }
 
             try {
@@ -561,10 +456,27 @@ function getShortUrl(url, maxLength = 180) {
                 addResultToTable(result, index);
                 updateStats();
 
+                // 构建完整的日志消息
+                const displayUrl = getShortUrl(entry.url, 120);
+                
                 if (result.success) {
-                    addLog(`[${index}/${urls.length}] ${entry.name} - 成功`, 'success');
+                    // 成功：显示响应时间
+                    addLog(`[${index}/${urls.length}] ${entry.name} - 成功 (${result.response_time?.toFixed(0) || 0}ms) → ${entry.url}`, 'success');
                 } else {
-                    addLog(`[${index}/${urls.length}] ${entry.name} - 失败`, 'error');
+                    // 失败：显示状态码和错误信息
+                    let errorDetail = '';
+                    if (result.status_code) {
+                        errorDetail = `状态码: ${result.status_code}`;
+                    }
+                    if (result.error && result.error !== `HTTP错误码: ${result.status_code}`) {
+                        errorDetail += errorDetail ? `, ${result.error}` : result.error;
+                    }
+                    if (!errorDetail) {
+                        errorDetail = '未知错误';
+                    }
+                    
+                    addLog(`[${index}/${urls.length}] ${entry.name} - 失败 (${errorDetail}) → ${entry.url}`, 'error');
+                    
                     if (stopOnFirstFailure && result.error && /代理|Empty reply/i.test(result.error)) {
                         addLog('检测到代理连接失败，已停止测试', 'error');
                         batchTestStopped = true;
@@ -580,7 +492,10 @@ function getShortUrl(url, maxLength = 180) {
                 batchTestResults.push(result);
                 addResultToTable(result, index);
                 updateStats();
-                addLog(`[${index}/${urls.length}] ${entry.name} - 网络错误`, 'error');
+                
+                // 网络错误：显示错误信息
+                const displayUrl = getShortUrl(entry.url, 120);
+                addLog(`[${index}/${urls.length}] ${entry.name} - 网络错误 (${err.message}) → ${entry.url}`, 'error');
             }
         }
 
@@ -673,79 +588,79 @@ function getShortUrl(url, maxLength = 180) {
     }
 
     // ==================== 测试记录 ====================
-function updateRecordsDisplay() {
-    if (!recordsList) return;
-    
-    recordsList.innerHTML = '';
-    
-    if (testRecords.length === 0) {
-        recordsList.innerHTML = `
-            <div class="record-empty">
-                <i class="fas fa-history"></i>
-                <p>暂无测试记录</p>
-                <p style="font-size: 0.8rem; margin-top: 5px;">完成测试后将自动保存记录</p>
-            </div>
-        `;
-        if (recordsCount) recordsCount.textContent = `记录: 0/${MAX_RECORDS}`;
-        return;
-    }
-    
-    testRecords.forEach((record, index) => {
-        const recordElement = document.createElement('div');
-        recordElement.className = 'record-compact';
+    function updateRecordsDisplay() {
+        if (!recordsList) return;
         
-        const successRate = record.summary ? 
-            Math.round((record.summary.success / record.summary.total) * 100) : 0;
+        recordsList.innerHTML = '';
         
-        const successRateClass = successRate >= 80 ? 'high' : 
-                               successRate >= 50 ? 'medium' : 'low';
-        
-        // 只显示第一个URL，完整显示一行
-        let urlDisplay = '';
-        if (record.urls && record.urls.length > 0) {
-            // 显示第一个URL，完整显示，只在结尾省略
-            urlDisplay = getShortUrl(record.urls[0], 180); // 显示更长的URL
+        if (testRecords.length === 0) {
+            recordsList.innerHTML = `
+                <div class="record-empty">
+                    <i class="fas fa-history"></i>
+                    <p>暂无测试记录</p>
+                    <p style="font-size: 0.8rem; margin-top: 5px;">完成测试后将自动保存记录</p>
+                </div>
+            `;
+            if (recordsCount) recordsCount.textContent = `记录: 0/${MAX_RECORDS}`;
+            return;
         }
         
-        // 完整的URL列表用于悬停提示
-        const fullUrls = record.urls ? record.urls.join('\n') : '';
-        
-        recordElement.innerHTML = `
-            <div class="record-compact-header">
-                <span class="record-time">${record.timestamp || '未知时间'}</span>
-                <span class="record-proxy" title="${record.proxy || '无代理'}">
-                    ${record.proxy ? getShortUrl(`socks5://${record.proxy}`, 40) : '无代理'}
-                </span>
-            </div>
-            <div class="record-url" title="${fullUrls}">
-                ${urlDisplay}
-            </div>
-            <div class="record-stats">
-                <span class="record-url-count">${record.summary ? record.summary.total : 0}个URL</span>
-                <span class="record-success-rate ${successRateClass}">${successRate}% 成功率</span>
-            </div>
-            <button class="record-delete-btn" title="删除记录">
-                <i class="fas fa-trash"></i>
-            </button>
-        `;
-        
-        recordElement.addEventListener('click', function(e) {
-            if (!e.target.closest('.record-delete-btn')) {
-                restoreRecordConfig(index);
+        testRecords.forEach((record, index) => {
+            const recordElement = document.createElement('div');
+            recordElement.className = 'record-compact';
+            
+            const successRate = record.summary ? 
+                Math.round((record.summary.success / record.summary.total) * 100) : 0;
+            
+            const successRateClass = successRate >= 80 ? 'high' : 
+                                   successRate >= 50 ? 'medium' : 'low';
+            
+            // 只显示第一个URL，完整显示一行
+            let urlDisplay = '';
+            if (record.urls && record.urls.length > 0) {
+                // 显示第一个URL，完整显示，只在结尾省略
+                urlDisplay = getShortUrl(record.urls[0], 180); // 显示更长的URL
             }
+            
+            // 完整的URL列表用于悬停提示
+            const fullUrls = record.urls ? record.urls.join('\n') : '';
+            
+            recordElement.innerHTML = `
+                <div class="record-compact-header">
+                    <span class="record-time">${record.timestamp || '未知时间'}</span>
+                    <span class="record-proxy" title="${record.proxy || '无代理'}">
+                        ${record.proxy ? getShortUrl(`socks5://${record.proxy}`, 40) : '直连'}
+                    </span>
+                </div>
+                <div class="record-url" title="${fullUrls}">
+                    ${urlDisplay}
+                </div>
+                <div class="record-stats">
+                    <span class="record-url-count">${record.summary ? record.summary.total : 0}个URL</span>
+                    <span class="record-success-rate ${successRateClass}">${successRate}% 成功率</span>
+                </div>
+                <button class="record-delete-btn" title="删除记录">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            
+            recordElement.addEventListener('click', function(e) {
+                if (!e.target.closest('.record-delete-btn')) {
+                    restoreRecordConfig(index);
+                }
+            });
+            
+            const deleteBtn = recordElement.querySelector('.record-delete-btn');
+            deleteBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                deleteRecord(index);
+            });
+            
+            recordsList.appendChild(recordElement);
         });
         
-        const deleteBtn = recordElement.querySelector('.record-delete-btn');
-        deleteBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            deleteRecord(index);
-        });
-        
-        recordsList.appendChild(recordElement);
-    });
-    
-    if (recordsCount) recordsCount.textContent = `记录: ${testRecords.length}/${MAX_RECORDS}`;
-}
+        if (recordsCount) recordsCount.textContent = `记录: ${testRecords.length}/${MAX_RECORDS}`;
+    }
 
     function restoreRecordConfig(index) {
         const record = testRecords[index];
@@ -941,76 +856,8 @@ http://tvgslb.hn.chinamobile.com:8089/180000001002/00000001000000000007000000001
         addLog('测试报告已导出', 'success');
     }
 
-    // ==================== 日志功能 ====================
-    function loadHistoricalLog(index) {
-        const logEntry = historicalLogs[index];
-        if (!logEntry) return;
-        
-        isViewingHistoricalLog = true;
-        if (logBox) {
-            logBox.innerHTML = '';
-            
-            if (logEntry.logs && logEntry.logs.length > 0) {
-                logEntry.logs.forEach(log => {
-                    const div = document.createElement('div');
-                    div.className = 'log-entry';
-                    
-                    const timeSpan = document.createElement('span');
-                    timeSpan.className = 'log-time';
-                    timeSpan.textContent = log.time;
-                    
-                    const msgSpan = document.createElement('span');
-                    msgSpan.className = `log-${log.type}`;
-                    msgSpan.textContent = log.message;
-                    
-                    div.appendChild(timeSpan);
-                    div.appendChild(msgSpan);
-                    logBox.appendChild(div);
-                });
-            } else {
-                logBox.innerHTML = '<div class="log-entry"><span class="log-info">该历史日志没有内容</span></div>';
-            }
-        }
-        
-        addLog(`已加载历史日志: ${logEntry.title || '未命名日志'}`, 'info');
-    }
-
-    function showRealtimeLog() {
-        isViewingHistoricalLog = false;
-        if (logBox) {
-            logBox.innerHTML = '';
-            
-            if (currentTestLogs.length > 0) {
-                currentTestLogs.forEach(log => {
-                    const div = document.createElement('div');
-                    div.className = 'log-entry';
-                    
-                    const timeSpan = document.createElement('span');
-                    timeSpan.className = 'log-time';
-                    timeSpan.textContent = log.time;
-                    
-                    const msgSpan = document.createElement('span');
-                    msgSpan.className = `log-${log.type}`;
-                    msgSpan.textContent = log.message;
-                    
-                    div.appendChild(timeSpan);
-                    div.appendChild(msgSpan);
-                    logBox.appendChild(div);
-                });
-            } else {
-                logBox.innerHTML = '<div class="log-entry"><span class="log-info">暂无实时日志</span></div>';
-            }
-        }
-        
-        addLog('已切换到实时日志', 'info');
-    }
-
     function exportLog() {
-        const logsToExport = isViewingHistoricalLog ? 
-            (historicalLogs[historicalLogsSelect.value]?.logs || []) : 
-            currentTestLogs;
-            
-        if (logsToExport.length === 0) {
+        if (currentTestLogs.length === 0) {
             alert('没有日志可导出');
             return;
         }
@@ -1020,11 +867,10 @@ http://tvgslb.hn.chinamobile.com:8089/180000001002/00000001000000000007000000001
         
         let logText = `=== SOCKS5测试工具日志 ===\n`;
         logText += `生成时间: ${new Date().toLocaleString()}\n`;
-        logText += `日志类型: ${isViewingHistoricalLog ? '历史日志' : '实时日志'}\n`;
-        logText += `日志数量: ${logsToExport.length}条\n`;
+        logText += `日志数量: ${currentTestLogs.length}条\n`;
         logText += '='.repeat(40) + '\n\n';
         
-        logsToExport.forEach(log => {
+        currentTestLogs.forEach(log => {
             const typeText = log.type === 'info' ? '[信息]' : 
                            log.type === 'success' ? '[成功]' : 
                            log.type === 'error' ? '[错误]' : 

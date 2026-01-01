@@ -1,7 +1,7 @@
 <?php
 /**
  * SOCKS5代理测试API（增强版）
- * 支持：SOCKS5代理 + 直播源测试 + 自定义 User-Agent + 批量测试 + 强制IPv4 + 跳转链追踪
+ * 支持：SOCKS5代理（可选） + 直播源测试 + 自定义 User-Agent + 批量测试 + 强制IPv4 + 跳转链追踪
  */
 
 // 设置响应头
@@ -115,7 +115,7 @@ function testSocks5Proxy($data) {
 
 
 /**
- * 批量测试M3U8通过代理
+ * 批量测试M3U8（支持代理和直连模式）
  */
 function batchTestM3U8ViaProxy($data, $customUA = '') {
     $urlsText = $data['urls'] ?? '';
@@ -126,8 +126,7 @@ function batchTestM3U8ViaProxy($data, $customUA = '') {
     $forceIPv4 = $data['force_ipv4'] ?? false; // 新增：强制使用IPv4
 
     if (!$urlsText) return ['success' => false, 'error' => 'URL列表不能为空'];
-    if (!$proxyHost || !$proxyPort) return ['success' => false, 'error' => '代理主机和端口不能为空'];
-
+    
     // 解析URL列表（一行一个）
     $urls = explode("\n", trim($urlsText));
     $urls = array_map('trim', $urls);
@@ -165,11 +164,15 @@ function batchTestM3U8ViaProxy($data, $customUA = '') {
 
         // 第一步：检查HTTP状态码（支持跳转链追踪）
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_PROXY, "$proxyHost:$proxyPort");
-        curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
 
-        if (!empty($proxyUsername)) {
-            curl_setopt($ch, CURLOPT_PROXYUSERPWD, "$proxyUsername:$proxyPassword");
+        // 只有在有代理时才设置代理
+        if ($proxyHost && $proxyPort) {
+            curl_setopt($ch, CURLOPT_PROXY, "$proxyHost:$proxyPort");
+            curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
+
+            if (!empty($proxyUsername)) {
+                curl_setopt($ch, CURLOPT_PROXYUSERPWD, "$proxyUsername:$proxyPassword");
+            }
         }
 
         curl_setopt($ch, CURLOPT_URL, $url);
